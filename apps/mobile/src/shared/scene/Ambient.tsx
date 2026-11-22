@@ -11,13 +11,12 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
-import { AtomIcon } from '@/shared/ui/icons';
+import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';
 import { colors, motion } from '@/theme';
 import { between, seeded } from './random';
 
-const ATOM_SIZE = 44;
-const ATOM_OPACITY = 0.3;
+const ATOM_SIZE = 62;
+const ATOM_OPACITY = 0.33;
 const DESIGN_WIDTH = 390;
 
 /**
@@ -31,6 +30,10 @@ export function Ambient({ atoms, sparkles }: { atoms: number; sparkles: number }
     duration: between(rand, motion.drift.minDuration, motion.drift.maxDuration),
     spin: between(rand, motion.spinAtom.minDuration, motion.spinAtom.maxDuration),
     start: rand(),
+    // Canvas: a big faint atom with a sunny nucleus, then smaller, fainter coral ones.
+    size: i === 0 ? ATOM_SIZE : ATOM_SIZE * 0.7,
+    opacity: i === 0 ? ATOM_OPACITY : ATOM_OPACITY * 0.75,
+    nucleus: i % 2 === 0 ? colors.sunny : colors.coral,
     key: i,
   }));
   const sparkleList = Array.from({ length: sparkles }, (_, i) => ({
@@ -53,7 +56,16 @@ export function Ambient({ atoms, sparkles }: { atoms: number; sparkles: number }
   );
 }
 
-function DriftingAtom(p: { y: number; duration: number; spin: number; start: number }) {
+function DriftingAtom(p: {
+  y: number;
+  duration: number;
+  spin: number;
+  start: number;
+  size: number;
+  opacity: number;
+  nucleus: string;
+}) {
+  const size = p.size;
   const { width, height } = useWindowDimensions();
   const reduced = useReducedMotion();
   // Design coordinates (−120 → +460 on a 390-wide phone) scaled to this screen.
@@ -94,9 +106,16 @@ function DriftingAtom(p: { y: number; duration: number; spin: number; start: num
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.atom, { top: p.y * height, opacity: ATOM_OPACITY }, style]}
+      style={[styles.atom, { top: p.y * height, opacity: p.opacity }, style]}
     >
-      <AtomIcon color={colors.white} size={ATOM_SIZE} />
+      <Svg width={size} height={size} viewBox="0 0 64 64">
+        <G fill="none" stroke={colors.white} strokeWidth={2.4}>
+          <Ellipse cx={32} cy={32} rx={28} ry={10} />
+          <Ellipse cx={32} cy={32} rx={28} ry={10} transform="rotate(60 32 32)" />
+          <Ellipse cx={32} cy={32} rx={28} ry={10} transform="rotate(120 32 32)" />
+        </G>
+        <Circle cx={32} cy={32} r={6} fill={p.nucleus} />
+      </Svg>
     </Animated.View>
   );
 }

@@ -19,11 +19,19 @@ import Animated, {
 import Svg, { Circle, Line, Rect, SvgXml } from 'react-native-svg';
 import { colors, elevation, motion, radius, sizes, space, surfaces, textStyle } from '@/theme';
 
-type Props = { term: ContentTerm; solved: boolean };
+type Props = {
+  term: ContentTerm;
+  solved: boolean;
+  /** Correct answer: the card gets a sunny ring (canvas → Correct). */
+  celebrate?: boolean;
+};
 
 const CARD = sizes.pictureCard;
-const INSET = space.s14;
-const AREA = CARD - INSET * 2;
+/** White frame around the lilac picture panel. */
+const FRAME = space.s10;
+const AREA = CARD - FRAME * 2;
+const CELEBRATE_RING = 6;
+const TAG_TILT = '-5deg';
 const BADGE = 30;
 /** Glow opacity; box highlights cover more of the picture, so they glow more softly. */
 const GLOW = { min: 0.22, max: 0.5, boxFactor: 0.55 };
@@ -35,10 +43,10 @@ const RING_SCALE = 1.35;
  * and a leader line to a "?" badge, which becomes the term once it's answered. Terms without a
  * picture show their clue instead.
  */
-export function PictureCard({ term, solved }: Props) {
+export function PictureCard({ term, solved, celebrate = false }: Props) {
   const tag = (
     <View style={styles.tag}>
-      <Text style={styles.tagText}>{`Grade 8 · ${term.subject}`.toUpperCase()}</Text>
+      <Text style={styles.tagText}>{`Grade 8 · ${term.subject}`}</Text>
     </View>
   );
 
@@ -59,7 +67,7 @@ export function PictureCard({ term, solved }: Props) {
   const diagram = DIAGRAMS[term.picture.diagram as DiagramId];
   return (
     <View
-      style={styles.card}
+      style={[styles.card, celebrate && styles.celebrate]}
       accessible
       accessibilityRole="image"
       accessibilityLabel={`${term.picture.altText}. The part to name is glowing.${solved ? ` It's ${term.display}.` : ''}`}
@@ -147,9 +155,9 @@ function Highlight({ picture, label }: { picture: LocalPicture; label: string })
               cy={ring / 2}
               r={ring / 2 - 2}
               fill="none"
-              stroke={colors.sunny}
-              strokeWidth={2.5}
-              strokeDasharray="6 6"
+              stroke={colors.sunnyShadow}
+              strokeWidth={3}
+              strokeDasharray="7 6"
             />
           </Svg>
         </Animated.View>
@@ -163,9 +171,9 @@ function Highlight({ picture, label }: { picture: LocalPicture; label: string })
             height={box.height + 6}
             rx={radius.tile}
             fill="none"
-            stroke={colors.sunny}
-            strokeWidth={2.5}
-            strokeDasharray="6 6"
+            stroke={colors.sunnyShadow}
+            strokeWidth={3}
+            strokeDasharray="7 6"
           />
         ) : null}
         {lineFrom ? (
@@ -174,7 +182,7 @@ function Highlight({ picture, label }: { picture: LocalPicture; label: string })
             y1={lineFrom.y}
             x2={badge.x}
             y2={badge.y}
-            stroke={colors.sunny}
+            stroke={colors.night}
             strokeWidth={2.5}
             strokeLinecap="round"
           />
@@ -227,30 +235,43 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: CARD,
     height: CARD,
-    backgroundColor: colors.lilac,
+    backgroundColor: colors.white,
     borderRadius: radius.pictureCard,
-    padding: INSET,
-    boxShadow: `0 ${elevation.card.offsetY}px ${elevation.card.blur}px ${surfaces.cardShadow}`,
+    padding: FRAME,
+    boxShadow: `0 ${elevation.card.offsetY * 1.7}px ${elevation.card.blur * 1.5}px ${surfaces.cardShadow}`,
+  },
+  celebrate: {
+    boxShadow: `0 0 0 ${CELEBRATE_RING}px ${colors.sunny}, 0 ${elevation.card.offsetY * 1.7}px ${elevation.card.blur * 1.5}px ${surfaces.cardShadow}`,
   },
   clueCard: {
     height: undefined,
     minHeight: CARD * 0.72,
     padding: space.s20,
-    paddingTop: space.s24 + space.s20,
+    paddingTop: space.s24 + space.s10,
     gap: space.s10,
     justifyContent: 'center',
   },
-  area: { width: AREA, height: AREA },
+  area: {
+    width: AREA,
+    height: AREA,
+    borderRadius: radius.card,
+    overflow: 'hidden',
+    backgroundColor: colors.lilac,
+  },
+  // Tilted coral tag hanging off the card's top-left corner (canvas).
   tag: {
     position: 'absolute',
-    top: space.s16,
-    left: space.s16,
+    top: -space.s14,
+    left: -space.s10,
+    height: space.s24 + space.s6,
+    justifyContent: 'center',
     backgroundColor: colors.coral,
     borderRadius: radius.chip,
-    paddingHorizontal: space.s10,
-    paddingVertical: space.s4,
+    paddingHorizontal: space.s12,
+    transform: [{ rotate: TAG_TILT }],
+    boxShadow: `0 6px 14px ${surfaces.cardShadow}`,
   },
-  tagText: { ...textStyle('label'), color: colors.night },
+  tagText: { ...textStyle('chip'), color: colors.night },
   clue: { ...textStyle('title'), color: colors.night, textAlign: 'center' },
   answer: { ...textStyle('bodyMedium'), color: colors.violet, textAlign: 'center' },
   glow: {
@@ -263,14 +284,12 @@ const styles = StyleSheet.create({
     minWidth: BADGE,
     height: BADGE,
     borderRadius: radius.full,
-    backgroundColor: colors.sunny,
-    borderWidth: 2,
-    borderColor: colors.night,
+    backgroundColor: colors.night,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: space.s8,
     maxWidth: AREA,
   },
-  badgeQ: { ...textStyle('button'), color: colors.night },
-  badgeTerm: { ...textStyle('chip'), color: colors.night },
+  badgeQ: { ...textStyle('button'), color: colors.sunny },
+  badgeTerm: { ...textStyle('chip'), color: colors.sunny },
 });

@@ -31,7 +31,6 @@ describe('bubbleFor', () => {
     expect(bubble(await actorAfter(undefined, withPicture))).toEqual({
       title: 'Name the glowing part',
       sub: 'Tap the mic and say the term.',
-      chip: undefined,
     });
     const isotope = GRADE8_TERMS.find((t) => t.canonical === 'isotope')!;
     expect(isotope.picture).toBeUndefined();
@@ -41,22 +40,26 @@ describe('bubbleFor', () => {
   it('idle: shows the clue chip once the clue hint is used (picture terms)', async () => {
     const a = await actorAfter(undefined, withPicture);
     a.send({ type: 'HINT' });
-    expect(bubble(a).chip).toEqual({ kind: 'clue', text: nucleus.clue });
+    expect(bubble(a).clue).toBe(nucleus.clue);
   });
 
   it('listening: live transcript in the Heard chip', async () => {
     const a = await actorAfter();
     a.send({ type: 'TAP_MIC' });
-    expect(bubble(a)).toEqual({ title: 'Listening…', chip: { kind: 'heard', text: '…' } });
+    expect(bubble(a)).toEqual({
+      title: 'Listening…',
+      sub: 'Say the term. I stop when you pause.',
+      heard: { state: 'live', label: 'Heard', text: '…' },
+    });
     a.send({ type: 'PARTIAL', text: 'nucle' });
-    expect(bubble(a).chip?.text).toBe('nucle');
+    expect(bubble(a).heard?.text).toBe('nucle');
   });
 
-  it('close: the reason, lives left, what was heard and the pronunciation', async () => {
+  it('close: the reason, what was heard (marked as a miss) and the pronunciation', async () => {
     expect(bubble(await actorAfter(['nuclear']))).toEqual({
       title: "Close — that's the adjective.",
-      sub: '2 lives left.',
-      chip: { kind: 'miss', text: 'Heard: nuclear' },
+      sub: 'Hear it, then try again.',
+      heard: { state: 'miss', label: 'Heard', text: 'nuclear' },
       pronunciation: 'nu·cle·us',
     });
   });
@@ -77,6 +80,7 @@ describe('bubbleFor', () => {
     expect(bubble(await actorAfter(['nucleus']))).toEqual({
       title: 'Nucleus. Nailed it.',
       sub: '+100',
+      heard: { state: 'hit', label: 'Heard', text: 'nucleus' },
     });
   });
 

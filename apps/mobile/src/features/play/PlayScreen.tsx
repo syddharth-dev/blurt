@@ -17,7 +17,6 @@ import { moodFor } from '@/shared/mascot';
 import { Confetti, Float, Rise, SceneBackground, Sunburst } from '@/shared/scene';
 import { useRoundResults } from '@/shared/session/roundResults';
 import { createSpeechRecognizer, type PermissionState } from '@/shared/speech';
-import { KeyboardIcon } from '@/shared/ui/icons';
 import { Placeholder } from '@/shared/ui/Placeholder';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { TextButton } from '@/shared/ui/TextButton';
@@ -37,7 +36,7 @@ import { nextHint, phaseOf, progressLabel, tilesFor } from './machine/roundView'
 /** Until the Profile screen adds a speech-language setting (SCREENS.md → still to design). */
 const SPEECH_LANG = 'en-US';
 export const MIX_TOPIC_ID = 'mix';
-const SUNBURST = sizes.pictureCard * 1.5;
+const SUNBURST = sizes.pictureCard * 1.52;
 
 type RoundSetup = { topicId: string; title: string; subject: string; terms: typeof GRADE8_TERMS };
 
@@ -182,10 +181,14 @@ function RoundView({ round }: { round: RoundSetup }) {
 
             <View style={styles.stage}>
               <View style={styles.sunburst}>
-                <Sunburst size={SUNBURST} />
+                <Sunburst size={SUNBURST} bright={phase === 'correct'} />
               </View>
               <Float>
-                <PictureCard term={term} solved={phase === 'correct' || phase === 'revealed'} />
+                <PictureCard
+                  term={term}
+                  solved={phase === 'correct' || phase === 'revealed'}
+                  celebrate={phase === 'correct'}
+                />
               </Float>
               {phase === 'correct' ? <Rise key={c.index} text={`+${c.lastXp}`} /> : null}
             </View>
@@ -255,7 +258,6 @@ function RoundView({ round }: { round: RoundSetup }) {
                     onPress={() => send({ type: 'TYPE_INSTEAD' })}
                     style={styles.typeLink}
                   >
-                    <KeyboardIcon color={colors.lilac} />
                     <Text style={styles.typeLinkText}>Type it instead</Text>
                   </Pressable>
                 </>
@@ -294,5 +296,10 @@ const styles = StyleSheet.create({
     minHeight: sizes.minTouch,
     paddingHorizontal: space.s12,
   },
-  typeLinkText: { ...textStyle('chip'), color: colors.lilac },
+  typeLinkText: {
+    ...textStyle('bodyMedium'),
+    fontFamily: textStyle('label').fontFamily,
+    color: colors.white,
+    textDecorationLine: 'underline',
+  },
 });

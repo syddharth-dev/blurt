@@ -31,6 +31,11 @@ The code copy of every token in this file is `packages/shared/src/theme` (`color
 | `lilacLine` | `#E4DCFF` | Neutrons, light dividers |
 | `ink2` | `#4B4370` | Secondary text on white |
 | `white` | `#FFFFFF` | Cards, bubbles |
+| `violetTint` / `violetInk` | `#F1ECFF` / `#3A16C9` | Chips on white cards ("10 terms", "Grade 8") |
+| `sunnyTint` / `sunnyInk` | `#FFF4D1` / `#7A4F00` | "CLUE" tag, XP chips |
+| `coralTint` / `coralInk` | `#FFE9E3` / `#B23A0A` | "Daily" tag |
+| `track` | `#EEE9FA` | Progress-bar track and dividers on white |
+| `lockedPanel` / `lockedInk` | `#E6E0F7` / `#5E5585` | Locked topic card |
 | `glass` | `rgba(255,255,255,0.12–0.16)` + 14–18 px blur | Controls on scenes |
 | `scrim` | `rgba(22,12,58,0.35–0.6)` + blur | Chips and fact card on scenes |
 

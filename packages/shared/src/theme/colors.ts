@@ -14,6 +14,18 @@ export const colors = {
   lilacLine: '#E4DCFF',
   ink2: '#4B4370',
   white: '#FFFFFF',
+  // Tints for chips and tags on white cards (from the design canvas), each with its ink colour.
+  violetTint: '#F1ECFF',
+  violetInk: '#3A16C9',
+  sunnyTint: '#FFF4D1',
+  sunnyInk: '#7A4F00',
+  coralTint: '#FFE9E3',
+  coralInk: '#B23A0A',
+  /** Progress-bar track and dividers on white */
+  track: '#EEE9FA',
+  /** Locked topic panel and its icon/text */
+  lockedPanel: '#E6E0F7',
+  lockedInk: '#5E5585',
 } as const;
 
 export type ColorToken = keyof typeof colors;

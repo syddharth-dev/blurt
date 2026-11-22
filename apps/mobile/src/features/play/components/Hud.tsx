@@ -25,33 +25,32 @@ type Props = {
 /** HUD: quit, topic + "3 / 10", segmented progress, lives (docs/SCREENS.md). */
 export function Hud({ topicTitle, progress, done, total, lives, onQuit }: Props) {
   return (
-    <View style={styles.hud}>
-      <View style={styles.row}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Quit round"
-          onPress={onQuit}
-          style={styles.quit}
-          hitSlop={space.s8}
-        >
-          <CloseIcon color={colors.white} />
-        </Pressable>
-        <View style={styles.titleBox}>
-          <Text style={styles.title} numberOfLines={1}>
-            {topicTitle}
+    <View style={styles.row}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Quit round"
+        onPress={onQuit}
+        style={styles.quit}
+      >
+        <CloseIcon color={colors.white} size={sizes.iconSmall} />
+      </Pressable>
+      <View style={styles.middle}>
+        <View style={styles.labels}>
+          <Text style={styles.label} numberOfLines={1}>
+            {topicTitle.toUpperCase()}
           </Text>
-          <Text style={styles.progress}>{progress}</Text>
+          <Text style={styles.label}>{progress}</Text>
         </View>
-        <View
-          style={styles.lives}
-          accessible
-          accessibilityLabel={`${lives} ${lives === 1 ? 'life' : 'lives'} left`}
-        >
-          <HeartIcon color={colors.coral} />
-          <Text style={styles.livesText}>{lives}</Text>
-        </View>
+        <ProgressBar done={done} total={total} />
       </View>
-      <ProgressBar done={done} total={total} />
+      <View
+        style={styles.lives}
+        accessible
+        accessibilityLabel={`${lives} ${lives === 1 ? 'life' : 'lives'} left`}
+      >
+        <HeartIcon color={colors.coral} />
+        <Text style={styles.livesText}>{lives}</Text>
+      </View>
     </View>
   );
 }
@@ -99,37 +98,38 @@ function CurrentSegment() {
 }
 
 const styles = StyleSheet.create({
-  hud: { gap: space.s10 },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.s12 },
   quit: {
     width: sizes.minTouch,
     height: sizes.minTouch,
-    borderRadius: radius.full,
+    borderRadius: radius.chip + 2,
     backgroundColor: surfaces.glass,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  titleBox: { flex: 1, alignItems: 'center' },
-  title: { ...textStyle('bodyMedium'), color: colors.white },
-  progress: { ...textStyle('label'), color: colors.lilac },
+  middle: { flex: 1, gap: space.s6 },
+  labels: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s8 },
+  label: { ...textStyle('label'), color: colors.white, flexShrink: 1 },
   lives: {
-    minWidth: sizes.minTouch,
     height: sizes.minTouch,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: space.s4,
-    borderRadius: radius.chip,
+    gap: space.s6,
+    borderRadius: radius.chip + 2,
     backgroundColor: surfaces.glass,
-    paddingHorizontal: space.s10,
+    paddingHorizontal: space.s12,
   },
-  livesText: { ...textStyle('button'), color: colors.white },
+  livesText: {
+    ...textStyle('bodyMedium'),
+    fontFamily: textStyle('label').fontFamily,
+    color: colors.white,
+  },
   bar: { flexDirection: 'row', gap: space.s4 },
   segment: {
     flex: 1,
     height: sizes.progressHeight,
     borderRadius: radius.full,
-    backgroundColor: surfaces.glass,
+    backgroundColor: surfaces.glassBorder,
   },
   segmentDone: { backgroundColor: colors.sunny },
   segmentCurrent: { backgroundColor: colors.white },

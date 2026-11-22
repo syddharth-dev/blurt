@@ -39,7 +39,7 @@ export const sizes = {
   pictureCard: 250,
   /** Count badge on the dock's side buttons */
   badge: 22,
-  progressHeight: 6,
+  progressHeight: 8,
   icon: 24,
   iconSmall: 18,
   tileGap: 6,

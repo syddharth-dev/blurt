@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { MicIcon } from '@/shared/ui/icons';
-import { colors, elevation, motion, radius, sizes } from '@/theme';
+import { colors, elevation, motion, radius, sizes, surfaces } from '@/theme';
 
 type Props = {
   look: 'idle' | 'listening' | 'disabled';
@@ -120,11 +120,11 @@ const styles = StyleSheet.create({
   },
   idle: {
     backgroundColor: colors.sunny,
-    boxShadow: `0 ${elevation.button3d.offsetY}px 0 ${colors.sunnyShadow}`,
+    boxShadow: `0 ${elevation.button3d.offsetY}px 0 ${colors.sunnyShadow}, 0 14px 30px ${surfaces.cardShadow}`,
   },
   live: {
     backgroundColor: colors.coral,
-    boxShadow: `0 ${elevation.button3d.offsetY}px 0 ${colors.coralShadow}`,
+    boxShadow: `0 ${elevation.button3d.offsetY}px 0 ${colors.coralShadow}, 0 14px 30px ${surfaces.cardShadow}`,
   },
   disabled: { opacity: 0.6 },
   pressed: { transform: [{ translateY: elevation.button3d.pressTravel }] },
@@ -137,5 +137,5 @@ const styles = StyleSheet.create({
     borderColor: colors.coral,
   },
   bars: { flexDirection: 'row', alignItems: 'center', gap: BAR_W - 1, height: sizes.icon * 1.6 },
-  bar: { width: BAR_W, height: '100%', borderRadius: radius.full, backgroundColor: colors.white },
+  bar: { width: BAR_W, height: '100%', borderRadius: radius.full, backgroundColor: colors.night },
 });

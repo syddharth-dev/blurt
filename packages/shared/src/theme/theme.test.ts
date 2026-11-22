@@ -15,6 +15,11 @@ const TEXT_PAIRS: Array<[fg: keyof typeof colors, bg: keyof typeof colors]> = [
   ['night', 'coral'], // wrong verdict badge
   ['coralShadow', 'white'], // subject tag on cards
   ['lilac', 'night'],
+  ['violetInk', 'violetTint'], // chips like "10 terms"
+  ['sunnyInk', 'sunnyTint'], // CLUE tag, "+150 XP"
+  ['coralInk', 'coralTint'], // "Daily" tag
+  ['lockedInk', 'lockedPanel'], // locked topic text
+  ['lockedInk', 'white'],
 ];
 
 describe('brand colour contrast', () => {

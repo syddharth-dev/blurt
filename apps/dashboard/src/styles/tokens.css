@@ -15,6 +15,15 @@
   --color-lilac-line: #E4DCFF;
   --color-ink2: #4B4370;
   --color-white: #FFFFFF;
+  --color-violet-tint: #F1ECFF;
+  --color-violet-ink: #3A16C9;
+  --color-sunny-tint: #FFF4D1;
+  --color-sunny-ink: #7A4F00;
+  --color-coral-tint: #FFE9E3;
+  --color-coral-ink: #B23A0A;
+  --color-track: #EEE9FA;
+  --color-locked-panel: #E6E0F7;
+  --color-locked-ink: #5E5585;
   --radius-chip: 14px;
   --radius-tile: 12px;
   --radius-button: 22px;

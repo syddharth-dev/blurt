@@ -1,111 +1,136 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Pip, type PipMood } from '@/shared/mascot';
 import { SpeakerIcon } from '@/shared/ui/icons';
-import { colors, radius, sizes, space, textStyle } from '@/theme';
+import { colors, elevation, radius, sizes, space, surfaces, textStyle } from '@/theme';
 import type { BubbleContent } from '../copy';
 
 type Props = {
   mood: PipMood;
   bubble: BubbleContent;
-  /** Pronunciation audio arrives with Phase 4 (TTS clips); until then the chip is display-only. */
+  /** Pronunciation audio arrives with Phase 4 (TTS clips); until then the button shows syllables. */
   onPronounce?: () => void;
 };
 
+const TAIL = 18;
+
 /**
  * Pip + speech bubble (BRAND.md → Pip speech bubble): white, radius 22, tail pointing at Pip.
- * Holds a title, then sub-text or the clue chip, then a "Heard" chip. The bubble is a live
- * region so screen readers announce feedback; Pip is decorative next to it.
+ * Holds a title, then sub-text or the clue, then a "Heard" chip. The bubble is a live region
+ * so screen readers announce feedback; Pip is decorative next to it.
  */
 export function PipBubble({ mood, bubble, onPronounce }: Props) {
+  const heard = bubble.heard;
   return (
     <View style={styles.row}>
       <Pip mood={mood} size={sizes.pip.play} />
-      <View style={styles.bubbleWrap}>
+      <View style={styles.bubble} accessibilityLiveRegion="polite" accessible>
         <View style={styles.tail} />
-        <View style={styles.bubble} accessibilityLiveRegion="polite" accessible>
-          <Text style={styles.title}>{bubble.title}</Text>
-          {bubble.sub ? <Text style={styles.sub}>{bubble.sub}</Text> : null}
-          {bubble.chip ? (
-            <View
-              style={[
-                styles.chip,
-                bubble.chip.kind === 'heard' && styles.chipHeard,
-                bubble.chip.kind === 'miss' && styles.chipMiss,
-                bubble.chip.kind === 'clue' && styles.chipClue,
-              ]}
-            >
-              <Text style={styles.chipText}>
-                {bubble.chip.kind === 'heard' ? `Heard: ${bubble.chip.text}` : bubble.chip.text}
-              </Text>
-            </View>
-          ) : null}
-          {bubble.pronunciation ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Pronunciation: ${bubble.pronunciation}`}
-              accessibilityState={{ disabled: !onPronounce }}
-              disabled={!onPronounce}
-              onPress={onPronounce}
-              style={styles.pronounce}
-            >
-              <SpeakerIcon color={colors.violet} />
-              <Text style={styles.pronounceText}>{bubble.pronunciation}</Text>
-            </Pressable>
-          ) : null}
-        </View>
+        <Text style={styles.title}>{bubble.title}</Text>
+        {bubble.clue ? (
+          <View style={styles.clueRow}>
+            <Text style={styles.clueTag}>CLUE</Text>
+            <Text style={styles.clueText}>{bubble.clue}</Text>
+          </View>
+        ) : bubble.sub ? (
+          <Text style={styles.sub}>{bubble.sub}</Text>
+        ) : null}
+        {heard || bubble.pronunciation ? (
+          <View style={styles.heardRow}>
+            {heard ? (
+              <View
+                style={[
+                  styles.heard,
+                  heard.state === 'live' && styles.heardLive,
+                  heard.state === 'miss' && styles.heardMiss,
+                  heard.state === 'hit' && styles.heardHit,
+                ]}
+              >
+                <Text style={styles.heardLabel}>{heard.label.toUpperCase()}</Text>
+                <Text style={styles.heardText}>{heard.text}</Text>
+              </View>
+            ) : null}
+            {bubble.pronunciation ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Hear it pronounced: ${bubble.pronunciation}`}
+                accessibilityState={{ disabled: !onPronounce }}
+                disabled={!onPronounce}
+                onPress={onPronounce}
+                style={styles.pronounce}
+              >
+                <SpeakerIcon color={colors.white} />
+                <Text style={styles.pronounceText}>{bubble.pronunciation}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     </View>
   );
 }
 
-const TAIL = space.s12;
-
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.s4 },
-  bubbleWrap: { flex: 1, justifyContent: 'center' },
-  // A rotated square peeking out of the bubble's left edge, pointing at Pip.
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: space.s6 },
+  bubble: {
+    flex: 1,
+    minWidth: 0,
+    marginBottom: space.s14,
+    backgroundColor: colors.white,
+    borderRadius: radius.bubble,
+    paddingHorizontal: space.s14,
+    paddingVertical: space.s12,
+    gap: space.s6,
+    boxShadow: `0 ${elevation.card.offsetY - 2}px ${elevation.card.blur - 4}px ${surfaces.cardShadow}`,
+  },
+  // A rotated square at the bubble's bottom-left, pointing at Pip.
   tail: {
     position: 'absolute',
     left: -TAIL / 2 + 1,
-    top: '50%',
-    marginTop: -TAIL / 2,
+    bottom: space.s20,
     width: TAIL,
     height: TAIL,
+    borderRadius: 3,
     backgroundColor: colors.white,
     transform: [{ rotate: '45deg' }],
   },
-  bubble: {
-    backgroundColor: colors.white,
-    borderRadius: radius.bubble,
-    padding: space.s14,
-    gap: space.s6,
-  },
   title: { ...textStyle('title'), color: colors.night },
   sub: { ...textStyle('body'), color: colors.ink2 },
-  chip: {
-    alignSelf: 'flex-start',
-    borderRadius: radius.chip,
+  clueRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.s6 },
+  clueTag: {
+    ...textStyle('label'),
+    color: colors.sunnyInk,
+    backgroundColor: colors.sunnyTint,
+    borderRadius: radius.tile - 4,
+    paddingHorizontal: space.s6,
+    overflow: 'hidden',
+  },
+  clueText: { ...textStyle('body'), color: colors.night, flex: 1 },
+  heardRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.s6 },
+  heard: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: space.s8,
+    backgroundColor: colors.violetTint,
+    borderRadius: radius.tile,
+    borderWidth: 2,
+    borderColor: 'transparent',
     paddingHorizontal: space.s10,
     paddingVertical: space.s6,
+    maxWidth: '100%',
   },
-  chipHeard: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: colors.lilacLine,
-    backgroundColor: colors.lilac,
-  },
-  chipMiss: { backgroundColor: colors.coral },
-  chipClue: { backgroundColor: colors.lilac },
-  chipText: { ...textStyle('chip'), color: colors.night },
+  heardLive: { borderStyle: 'dashed', borderColor: colors.lilacLine },
+  heardMiss: { borderColor: colors.coral },
+  heardHit: { borderColor: colors.sunny },
+  heardLabel: { ...textStyle('label'), color: colors.ink2 },
+  heardText: { ...textStyle('bodyMedium'), color: colors.night, flexShrink: 1 },
   pronounce: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: space.s6,
     minHeight: sizes.minTouch,
-    paddingHorizontal: space.s12,
-    borderRadius: radius.chip,
-    backgroundColor: colors.lilac,
+    paddingHorizontal: space.s10,
+    borderRadius: radius.tile,
+    backgroundColor: colors.violet,
   },
-  pronounceText: { ...textStyle('bodyMedium'), color: colors.violet },
+  pronounceText: { ...textStyle('chip'), color: colors.white },
 });

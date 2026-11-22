@@ -50,7 +50,7 @@ describe('PlayScreen', () => {
 
     await tapMicAndWait();
     expect(await screen.findByText("Close — that's the adjective.")).toBeOnTheScreen();
-    expect(screen.getByText('Heard: nuclear')).toBeOnTheScreen();
+    expect(screen.getByText('nuclear')).toBeOnTheScreen(); // in the HEARD chip
     expect(screen.getByLabelText('2 lives left')).toBeOnTheScreen();
 
     await tapMicAndWait();

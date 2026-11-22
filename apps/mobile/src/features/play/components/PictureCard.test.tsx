@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react-native';
 import { sizes, space } from '@/theme';
 import { badgeLayout, PictureCard } from './PictureCard';
 
-const AREA = sizes.pictureCard - space.s14 * 2;
+const AREA = sizes.pictureCard - space.s10 * 2;
 const term = (c: string) => GRADE8_TERMS.find((t) => t.canonical === c)!;
 
 describe('badgeLayout', () => {
