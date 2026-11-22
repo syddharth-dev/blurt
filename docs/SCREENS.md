@@ -17,7 +17,7 @@ Background: `scene-lab-night`, drifting atoms, stars.
 
 Layout, top to bottom: HUD → picture card → letter tiles → Pip + bubble → control dock → "Type it instead".
 
-- **HUD**: quit (X), topic name + "3 / 10", a 10-segment progress bar (done = sunny, current = pulsing white), lives (coral heart + count).
+- **HUD**: quit (X), topic name + "3 / 10", a 10-segment progress bar (done = sunny, current = pulsing white), lives (coral heart + count). Lives belong to the whole round (3). Losing the last one reveals the term and ends the round.
 - **Picture card**: 250 px white card floating over a slowly spinning sunburst. Inside is the **picture** (a built-in diagram or one a teacher uploaded) with the target part highlighted. The app draws the highlight from the term's stored box (see `TEACHER_DASHBOARD.md`), by a pulsing sunny glow, a rotating dashed ring, and a leader line to a "?" badge. A coral tag at top-left shows "Grade 8 · Chemistry".
 - **Letter tiles**: one per letter. The first letter is revealed by default.
 
@@ -30,7 +30,7 @@ Layout, top to bottom: HUD → picture card → letter tiles → Pip + bubble �
 | **Wrong (confusable)** | oops | "That's the proton. This one has no charge." | Same as close |
 | **Correct** | celebrate | "Nucleus. Nailed it." + "+100 · 3 in a row" | Tiles pop yellow, the "?" badge becomes the term, "+100" rises, confetti. Dock is replaced by a **Quick fact** card + "Next term" button. |
 
-**Hints:** the first press shows a **clue** in the bubble, and each later press reveals the next letter. The button label shows what you'll get next (Clue → Letter). Each press costs one hint.
+**Hints:** the first press shows a **clue** in the bubble, and each later press reveals the next letter. The button label shows what you'll get next (Clue → Letter). Each press costs one hint. A round has 3 hints and 2 skips, shown on the side buttons' count badges. Hints never reveal the whole word.
 
 **Type it instead** opens a text field with the same matching. Always available (noisy room, mic denied, speech differences).
 

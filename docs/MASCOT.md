@@ -48,7 +48,7 @@ All moods blink every 4 s (eyes squash to 10% height for 0.1 s), except `celebra
 | Round: correct, level up, summary | `celebrate` |
 
 ```ts
-// src/features/mascot/moodFor.ts
+// src/shared/mascot/moodFor.ts
 import type { PipMood } from './pipMoods';
 export function moodFor(roundState: string): PipMood {
   switch (roundState) {
@@ -57,7 +57,8 @@ export function moodFor(roundState: string): PipMood {
     case 'close':
     case 'wrong':
     case 'revealed':   return 'oops';
-    case 'correct':    return 'celebrate';
+    case 'correct':
+    case 'done':       return 'celebrate';
     default:           return 'idle';
   }
 }
@@ -86,7 +87,7 @@ Follow the Reanimated install notes for your Expo SDK (current Expo templates al
 
 ### `pipMoods.ts`
 ```ts
-// src/features/mascot/pipMoods.ts
+// src/shared/mascot/pipMoods.ts
 export type PipMood = 'idle' | 'wave' | 'listening' | 'oops' | 'celebrate';
 
 export type MoodConfig = {
@@ -119,7 +120,7 @@ export const PIP_MOODS: Record<PipMood, MoodConfig> = {
 
 ### `Pip.tsx`
 ```tsx
-// src/features/mascot/Pip.tsx
+// src/shared/mascot/Pip.tsx
 import React, { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Path } from 'react-native-svg';

@@ -72,13 +72,25 @@ stateDiagram-v2
   evaluating --> wrong: verdict=wrong
   close --> listening: TAP_MIC
   wrong --> listening: TAP_MIC
-  close --> revealed: lives=0
-  wrong --> revealed: lives=0
-  correct --> [*]: NEXT
-  revealed --> [*]: NEXT
-  idle --> [*]: SKIP
+  close --> typing: TYPE_INSTEAD
+  wrong --> typing: TYPE_INSTEAD
+  evaluating --> revealed: miss and lives=0
+  correct --> idle: NEXT (next term)
+  idle --> idle: SKIP (next term)
+  close --> idle: SKIP (next term)
+  wrong --> idle: SKIP (next term)
+  correct --> done: NEXT on the last term
+  revealed --> done: NEXT (out of lives)
+  done --> [*]
 ```
 Pip's mood, the mic look, the bubble copy and the tile style are all **derived** from the current state. No component stores its own copy of the state.
+
+Implementation: `apps/mobile/src/features/play/machine/roundMachine.ts` (XState v5), with view helpers in `roundView.ts`.
+- **Lives belong to the round:** 3 per round. A close or wrong answer costs one. When the last one goes, the term is revealed and the round ends.
+- **Budgets per round:** 3 hint presses (the first press on a term shows the clue, later ones reveal a letter, and the whole word is never revealed) and 2 skips. HINT and SKIP work in idle, close and wrong. While listening, Type it instead aborts the recognizer.
+- **Local scoring (until Phase 3 moves it to the server):** 100 XP for a first try, minus 25 for each hint or miss on that term (minimum 25). The streak counts first-try answers only.
+- **Side effects are injected** with `roundMachine.provide()`: the actions `startListening`, `stopListening` and `abortListening`, and the actor `evaluateAnswer`. Phase 2 uses the local matcher; Phase 3 swaps in `POST /rounds/:id/attempts`.
+- **Output** when the round ends: `{ score, bestStreak, livesLeft, endedBy: 'complete' | 'out-of-lives' | 'quit', results[] }`, with each term's outcome (`first-try` / `assisted` / `missed` / `skipped`). The Summary screen uses it.
 
 ## Mobile folder structure
 ```
@@ -91,6 +103,7 @@ apps/mobile/
     theme/                  # tokens.ts, typography.ts, motion.ts: re-export packages/shared/src/theme + RN helpers
     shared/                 # ui kit (Button3D, GlassPanel, Chip, Tile), hooks, api client,
                             #   speech/ = SpeechRecognizer port + native and mock adapters
+                            #   mascot/ = Pip.tsx, pipMoods.ts, moodFor.ts (used by Home, Play, Summary)
     features/
       home/
       play/
@@ -98,13 +111,12 @@ apps/mobile/
         components/ (PictureCard, LetterTiles, MicButton, PipBubble, FactCard)
         PlayScreen.tsx
       speech-lab/           # Speech lab screen (Phase 1 spike, developer tool)
-      mascot/               # Pip.tsx, pipMoods.ts, moodFor.ts (react-native-svg + Reanimated)
       summary/
       topics/
       profile/
 ```
 
-Routes live in `apps/mobile/app/` (Expo Router uses it because there is no `src/app/`). Import app code with the `@/` alias (`@/theme`, `@/shared/...`, `@/features/...`). ESLint blocks imports from one feature into another. Code that several features use, like speech recognition (Play, Practice, onboarding's mic check), lives in `src/shared/`.
+Routes live in `apps/mobile/app/` (Expo Router uses it because there is no `src/app/`). Import app code with the `@/` alias (`@/theme`, `@/shared/...`, `@/features/...`). ESLint blocks imports from one feature into another. Code that several features use, like speech recognition (Play, Practice, onboarding's mic check) and Pip (Home, Play, Summary), lives in `src/shared/`.
 
 ## Shared package
 ```
