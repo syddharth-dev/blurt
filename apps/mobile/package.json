@@ -43,11 +43,12 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "lint": "expo lint",
+    "lint": "node scripts/gen-scenes.mjs --check && expo lint",
     "test": "jest",
     "doctor": "expo-doctor",
     "eas-build-post-install": "pnpm --filter @blurt/shared build",
-    "build:dev:android": "npx --yes eas-cli@latest build --profile development --platform android"
+    "build:dev:android": "npx --yes eas-cli@latest build --profile development --platform android",
+    "gen:scenes": "node scripts/gen-scenes.mjs"
   },
   "private": true,
   "jest": {

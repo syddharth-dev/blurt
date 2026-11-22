@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { GlassPanel } from '@/shared/scene';
 import { BulbIcon, SkipIcon } from '@/shared/ui/icons';
 import { colors, radius, sizes, space, surfaces, textStyle } from '@/theme';
 import { MicButton } from './MicButton';
@@ -15,7 +16,7 @@ type Props = {
 /** Glass dock (BRAND.md): Hint · Mic · Skip, radius 32, side buttons with a sunny count badge. */
 export function ControlDock({ micLook, micLabel, onMic, hint, skip }: Props) {
   return (
-    <View style={styles.dock}>
+    <GlassPanel style={styles.dock}>
       <SideButton
         label={hint.label}
         a11yLabel={`Hint: ${hint.label}. ${hint.count} left`}
@@ -36,7 +37,7 @@ export function ControlDock({ micLook, micLabel, onMic, hint, skip }: Props) {
         onPress={skip.onPress}
         icon={<SkipIcon color={colors.white} />}
       />
-    </View>
+    </GlassPanel>
   );
 }
 
@@ -77,7 +78,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    backgroundColor: surfaces.glass,
     borderRadius: radius.dock,
     paddingHorizontal: space.s20,
     paddingVertical: space.s14,

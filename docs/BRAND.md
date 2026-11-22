@@ -99,4 +99,6 @@ Both fonts are free on Google Fonts. Load them with `expo-font` (the `@expo-goog
 | Rise | "+100" moves up 60 px and fades, 1.6 s | Score gain |
 | Confetti | 22 pieces, 2.2–3.4 s falls | Correct, summary |
 
+Built in `apps/mobile/src/shared/scene/`. The scene SVGs in `assets/scenes/` are the source of truth: `pnpm --filter mobile gen:scenes` turns them into code (lint fails if that code is out of date). On Android, glass blurs only on Android 12 and later; older phones show the translucent fill alone.
+
 Rules: ambient motion is slow and quiet, and reactive motion is quick and clear. When the OS **Reduce Motion** setting is on, turn off drift, spin, float and confetti, and replace shakes and pops with simple fades.

@@ -105,6 +105,8 @@ apps/mobile/
                             #   speech/ = SpeechRecognizer port + native and mock adapters
                             #   mascot/ = Pip.tsx, pipMoods.ts, moodFor.ts (used by Home, Play, Summary)
                             #   session/ = small Zustand stores shared across screens (finished round → Summary)
+                            #   scene/ = SceneBackground (day/night SVG + drifting atoms, sparkles), GlassPanel (blur),
+                            #            Sunburst, Float, Confetti, Rise
                             #   ui/ = PrimaryButton, Chip, TextButton, icons, Placeholder, ErrorBoundary
     features/
       home/

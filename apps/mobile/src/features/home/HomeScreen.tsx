@@ -20,6 +20,7 @@ export function HomeScreen() {
         </>
       }
       body="See it. Say it. Know it."
+      scene="day"
     >
       {/* On Home, Pip waves (MASCOT.md mood mapping). */}
       <View style={styles.pip}>

@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { moodFor } from '@/shared/mascot';
+import { Confetti, Float, Rise, SceneBackground, Sunburst } from '@/shared/scene';
 import { useRoundResults } from '@/shared/session/roundResults';
 import { createSpeechRecognizer, type PermissionState } from '@/shared/speech';
 import { KeyboardIcon } from '@/shared/ui/icons';
@@ -36,6 +37,7 @@ import { nextHint, phaseOf, progressLabel, tilesFor } from './machine/roundView'
 /** Until the Profile screen adds a speech-language setting (SCREENS.md → still to design). */
 const SPEECH_LANG = 'en-US';
 export const MIX_TOPIC_ID = 'mix';
+const SUNBURST = sizes.pictureCard * 1.5;
 
 type RoundSetup = { topicId: string; title: string; subject: string; terms: typeof GRADE8_TERMS };
 
@@ -162,108 +164,125 @@ function RoundView({ round }: { round: RoundSetup }) {
   const label = micLabel(phase);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <Hud
-            topicTitle={round.title}
-            progress={progressLabel(c)}
-            done={c.results.length}
-            total={c.terms.length}
-            lives={c.lives}
-            onQuit={() => send({ type: 'QUIT' })}
-          />
+    <SceneBackground variant="night" atoms={2} sparkles={6}>
+      <SafeAreaView style={styles.screen}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <Hud
+              topicTitle={round.title}
+              progress={progressLabel(c)}
+              done={c.results.length}
+              total={c.terms.length}
+              lives={c.lives}
+              onQuit={() => send({ type: 'QUIT' })}
+            />
 
-          <PictureCard term={term} solved={phase === 'correct' || phase === 'revealed'} />
+            <View style={styles.stage}>
+              <View style={styles.sunburst}>
+                <Sunburst size={SUNBURST} />
+              </View>
+              <Float>
+                <PictureCard term={term} solved={phase === 'correct' || phase === 'revealed'} />
+              </Float>
+              {phase === 'correct' ? <Rise key={c.index} text={`+${c.lastXp}`} /> : null}
+            </View>
 
-          <LetterTiles tiles={tilesFor(c, phase)} missKey={c.missesOnTerm} />
+            <LetterTiles tiles={tilesFor(c, phase)} missKey={c.missesOnTerm} />
 
-          <PipBubble mood={moodFor(phase)} bubble={bubbleFor(phase, c)} />
+            <PipBubble mood={moodFor(phase)} bubble={bubbleFor(phase, c)} />
 
-          <View style={styles.bottom}>
-            {phase === 'correct' ? (
-              <>
-                <FactCard fact={term.fact} />
-                <PrimaryButton
-                  breathe
-                  label={isLast ? 'See results' : 'Next term'}
-                  onPress={() => send({ type: 'NEXT' })}
-                />
-              </>
-            ) : phase === 'revealed' ? (
-              <>
-                <FactCard fact={term.fact} />
-                <PrimaryButton breathe label="See results" onPress={() => send({ type: 'NEXT' })} />
-              </>
-            ) : phase === 'typing' || typedOnly ? (
-              <>
-                <TypeAnswer
-                  onSubmit={submitTyped}
-                  onCancel={typedOnly ? undefined : () => send({ type: 'CANCEL' })}
-                />
-                {typedOnly && permission === 'denied' ? (
-                  <TextButton
-                    label="Turn on the mic in Settings"
-                    onPress={() => void Linking.openSettings()}
+            <View style={styles.bottom}>
+              {phase === 'correct' ? (
+                <>
+                  <FactCard fact={term.fact} />
+                  <PrimaryButton
+                    breathe
+                    label={isLast ? 'See results' : 'Next term'}
+                    onPress={() => send({ type: 'NEXT' })}
                   />
-                ) : null}
-              </>
-            ) : (
-              <>
-                <ControlDock
-                  micLook={
-                    phase === 'listening'
-                      ? 'listening'
-                      : phase === 'evaluating'
-                        ? 'disabled'
-                        : 'idle'
-                  }
-                  micLabel={label}
-                  onMic={() => void onMic()}
-                  hint={{
-                    label: hint === 'letter' ? 'Letter' : 'Clue',
-                    count: c.hintsLeft,
-                    enabled: canAct && hint !== null,
-                    onPress: () => send({ type: 'HINT' }),
-                  }}
-                  skip={{
-                    count: c.skipsLeft,
-                    enabled: canAct && c.skipsLeft > 0,
-                    onPress: () => send({ type: 'SKIP' }),
-                  }}
-                />
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => send({ type: 'TYPE_INSTEAD' })}
-                  style={styles.typeLink}
-                >
-                  <KeyboardIcon color={colors.lilac} />
-                  <Text style={styles.typeLinkText}>Type it instead</Text>
-                </Pressable>
-              </>
-            )}
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+                </>
+              ) : phase === 'revealed' ? (
+                <>
+                  <FactCard fact={term.fact} />
+                  <PrimaryButton
+                    breathe
+                    label="See results"
+                    onPress={() => send({ type: 'NEXT' })}
+                  />
+                </>
+              ) : phase === 'typing' || typedOnly ? (
+                <>
+                  <TypeAnswer
+                    onSubmit={submitTyped}
+                    onCancel={typedOnly ? undefined : () => send({ type: 'CANCEL' })}
+                  />
+                  {typedOnly && permission === 'denied' ? (
+                    <TextButton
+                      label="Turn on the mic in Settings"
+                      onPress={() => void Linking.openSettings()}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <ControlDock
+                    micLook={
+                      phase === 'listening'
+                        ? 'listening'
+                        : phase === 'evaluating'
+                          ? 'disabled'
+                          : 'idle'
+                    }
+                    micLabel={label}
+                    onMic={() => void onMic()}
+                    hint={{
+                      label: hint === 'letter' ? 'Letter' : 'Clue',
+                      count: c.hintsLeft,
+                      enabled: canAct && hint !== null,
+                      onPress: () => send({ type: 'HINT' }),
+                    }}
+                    skip={{
+                      count: c.skipsLeft,
+                      enabled: canAct && c.skipsLeft > 0,
+                      onPress: () => send({ type: 'SKIP' }),
+                    }}
+                  />
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => send({ type: 'TYPE_INSTEAD' })}
+                    style={styles.typeLink}
+                  >
+                    <KeyboardIcon color={colors.lilac} />
+                    <Text style={styles.typeLinkText}>Type it instead</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
 
-      {showPrimer ? (
-        <MicPrimer
-          onAllow={() => void allowMic()}
-          onType={() => {
-            setShowPrimer(false);
-            send({ type: 'TYPE_INSTEAD' });
-          }}
-        />
-      ) : null}
-    </SafeAreaView>
+        {showPrimer ? (
+          <MicPrimer
+            onAllow={() => void allowMic()}
+            onType={() => {
+              setShowPrimer(false);
+              send({ type: 'TYPE_INSTEAD' });
+            }}
+          />
+        ) : null}
+        <Confetti burst={phase === 'correct' ? c.index : null} />
+      </SafeAreaView>
+    </SceneBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.night },
+  screen: { flex: 1 },
+  stage: { alignItems: 'center', justifyContent: 'center' },
+  sunburst: { position: 'absolute' },
   flex: { flex: 1 },
   content: { flexGrow: 1, padding: space.screen, gap: space.s16 },
   bottom: { marginTop: 'auto', gap: space.s12 },
