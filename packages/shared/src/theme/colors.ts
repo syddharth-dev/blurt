@@ -46,3 +46,37 @@ export const pipColors = {
   white: '#FFFFFF',
   shadow: '#0B0424',
 } as const;
+
+/**
+ * Illustration colours for the bundled diagrams (BRAND.md → "Diagram colours").
+ * Atom particles reuse the brand tokens: protons coral, neutrons lilacLine, electrons violet.
+ */
+export const diagramColors = {
+  outline: '#160C3A',
+  leaf: '#4CBF73',
+  leafDark: '#2E8B57',
+  cellAnimal: '#FFD9CC',
+  cellAnimalEdge: '#FF9E80',
+  cellPlant: '#E3F7D9',
+  cellPlantWall: '#5DAE45',
+  nucleus: '#C9B8FF',
+  nucleolus: '#5B2EFF',
+  vacuole: '#BDE8FF',
+  mitochondrion: '#FFB38A',
+  water: '#7FC8F8',
+  sky: '#D7EEFF',
+  soil: '#B07A4F',
+  soilDark: '#8A5A36',
+  rock: '#A39C9A',
+  rockDark: '#6F6866',
+  space: '#1F1452',
+  sun: '#FFC93C',
+  mars: '#E2603F',
+  jupiter: '#E8B88A',
+  jupiterBand: '#C98B5E',
+  cometTail: '#BDE8FF',
+  fungus: '#E58C5A',
+  stem: '#F3E3C8',
+  insect: '#8DC63F',
+  frog: '#3FAE5A',
+} as const;

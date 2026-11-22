@@ -33,7 +33,9 @@ describe('bubbleFor', () => {
       sub: 'Tap the mic and say the term.',
       chip: undefined,
     });
-    expect(bubble(await actorAfter()).title).toBe('Name the term');
+    const isotope = GRADE8_TERMS.find((t) => t.canonical === 'isotope')!;
+    expect(isotope.picture).toBeUndefined();
+    expect(bubble(await actorAfter(undefined, isotope)).title).toBe('Name the term');
   });
 
   it('idle: shows the clue chip once the clue hint is used (picture terms)', async () => {

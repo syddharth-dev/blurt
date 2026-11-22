@@ -53,7 +53,7 @@ async function type(a: Actor, text: string) {
 
 describe('roundMachine', () => {
   it('a term without a picture starts with its clue shown, so the first hint is a letter', () => {
-    const a = start();
+    const a = start({ terms: [byCanonical('gene')] });
     expect(ctx(a).clueShown).toBe(true);
     expect(nextHint(ctx(a))).toBe('letter');
     a.send({ type: 'HINT' });
@@ -61,8 +61,9 @@ describe('roundMachine', () => {
   });
 
   it('the clue state resets per term, based on whether it has a picture', async () => {
-    const a = start({ terms: [nucleus, withPicture(proton)] });
-    await say(a, 'nucleus');
+    const a = start({ terms: [byCanonical('gene'), withPicture(proton)] });
+    expect(ctx(a).clueShown).toBe(true);
+    await say(a, 'gene');
     a.send({ type: 'NEXT' });
     expect(ctx(a).clueShown).toBe(false);
   });

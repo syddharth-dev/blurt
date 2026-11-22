@@ -36,7 +36,7 @@ Layout, top to bottom: HUD → picture card → letter tiles → Pip + bubble �
 
 **Mic permission**: on the very first round, show Pip (listening) with a one-line explanation *before* the OS prompt. If permission is denied, Play switches to typed mode with a link to Settings.
 
-**Built (Phase 2):** `apps/mobile/src/features/play/`. For now, Home has a "Let's blurt" button (a mixed round of 10 terms) and one button per topic. Until a term has a picture, its card shows the clue, and the first hint reveals a letter. Pronunciation shows the syllables; the audio clips come with Phase 4. The speech language is fixed to en-US until the Profile screen adds a setting.
+**Built (Phase 2):** `apps/mobile/src/features/play/`. For now, Home has a "Let's blurt" button (a mixed round of 10 terms) and one button per topic. Until a term has a picture, its card shows the clue, and the first hint reveals a letter. Pronunciation shows the syllables; the audio clips come with Phase 4. 15 of the 30 starter terms have a bundled diagram (atom, animal cell, cell division, plant cell, earthquake, food chain, solar system). The glow, ring, leader line and badge are drawn by `PictureCard` from the term's highlight box. Box-shaped highlights glow more softly and use a still dashed frame instead of a rotating ring. The speech language is fixed to en-US until the Profile screen adds a setting.
 
 ## 3. Round summary
 Background: `scene-day`, big slow sunburst, confetti.

@@ -6,9 +6,10 @@
  * Copy rules (BRAND.md): clues never contain the answer; confusable feedback follows
  * "That's the X. This one …"; close reasons complete "Close — …".
  */
+import { PICTURES } from './pictures.js';
 import type { ContentTerm } from './types.js';
 
-export const GRADE8_TERMS: readonly ContentTerm[] = [
+const BASE_TERMS: readonly ContentTerm[] = [
   // ── Chemistry · Atoms and ions ────────────────────────────────────────────────
   {
     id: 'chem-proton',
@@ -519,6 +520,12 @@ export const GRADE8_TERMS: readonly ContentTerm[] = [
     ],
   },
 ];
+
+/** The starter terms, with a bundled picture where one exists (see pictures.ts). */
+export const GRADE8_TERMS: readonly ContentTerm[] = BASE_TERMS.map((t) => {
+  const picture = PICTURES[t.id];
+  return picture ? { ...t, picture } : t;
+});
 
 /**
  * Words to bias the recognizer with (`contextualStrings`): every term plus its

@@ -48,6 +48,9 @@ Used only by the mascot (`pipColors` in code, anatomy in `MASCOT.md`).
 | `white` | `#FFFFFF` | Eyes, sparkles |
 | `shadow` | `#0B0424` | Ground shadow (at 22 %) |
 
+### Diagram colours
+Used only by the bundled diagrams (`diagramColors` in code, drawings in `packages/shared/src/content/diagrams.ts`). Atom particles use the brand tokens: protons `coral`, neutrons `lilacLine` (outlined in `night`), electrons `violet`. The other colours (leaf greens, cell pinks, soil browns, sky and water blues, space navy) live in `diagramColors`. Diagrams carry no text, so they never give an answer away.
+
 Rules:
 - Right/close/wrong are told apart by **icon and text as well as colour**, and the colours also differ in lightness (yellow vs coral vs violet). Never rely on red/green.
 - Yellow buttons always carry **night** text, never white.

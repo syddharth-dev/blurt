@@ -7,7 +7,15 @@ export type LocalPicture = {
   /** Key into the app's diagram registry, e.g. "atom". */
   diagram: string;
   /** Highlight box as fractions (0–1) of the picture (DATA_AND_API.md → Term.highlight). */
-  highlight: { shape: 'ellipse' | 'rect'; x: number; y: number; w: number; h: number };
+  highlight: {
+    shape: 'ellipse' | 'rect';
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    /** Which side the "?" badge goes; by default the roomier side. */
+    badge?: 'left' | 'right';
+  };
   /** Describes the picture without giving the answer. */
   altText: string;
 };

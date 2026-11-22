@@ -11,7 +11,7 @@ A bare screen: tap mic, show partial and final alternatives, run the shared matc
 Status: built. The shared matcher (`packages/shared/src/matcher`), the speech port with native and mock adapters (`apps/mobile/src/shared/speech`), a draft of 30 Grade 8 terms (`packages/shared/src/content/grade8.ts`, **needs a science teacher's review**), and the **Speech lab** screen (`apps/mobile/src/features/speech-lab`, route `/speech-lab`, linked from Home). The lab shows partial and final alternatives, the verdict for each alternative, Type it instead, and language / on-device / model switches, and it can share a session log. Still to do: test on real Android phones with students, then tune.
 
 ### Phase 2 — Playable round (weeks 2–4)
-Round state machine ✅, Play screen with all states, letter tiles, hints, Type it instead (Play screen ✅ except the picture card, which is step 4), Pip built with react-native-svg + Reanimated (all five moods, see MASCOT.md) ✅, the night scene and ambient motion. Content is still local JSON.
+Round state machine ✅, Play screen with all states, letter tiles, hints, Type it instead (Play screen ✅, picture card with 7 bundled diagrams ✅), Pip built with react-native-svg + Reanimated (all five moods, see MASCOT.md) ✅, the night scene and ambient motion. Content is still local JSON.
 
 ### Phase 3 — Online (weeks 4–6)
 Auth, content API, rounds/attempts API with the server-side matcher, XP, streaks, summary screen, offline queue, prefetching a topic's assets.

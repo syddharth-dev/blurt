@@ -156,7 +156,8 @@ model Term {
   audioUrl   String?           // generated pronunciation clip
   pictureId  String
   picture    Picture  @relation(fields: [pictureId], references: [id])
-  /// Highlight box as fractions of the picture: { "shape": "ellipse"|"rect", "x": 0.41, "y": 0.38, "w": 0.18, "h": 0.2 }
+  /// Highlight box as fractions of the picture: { "shape": "ellipse"|"rect", "x": 0.41, "y": 0.38, "w": 0.18, "h": 0.2, "badge"?: "left"|"right" }
+  /// "badge" optionally picks the side for the "?" badge (default: the roomier side).
   highlight  Json
   difficulty Int      @default(1)
   status     Status   @default(DRAFT)

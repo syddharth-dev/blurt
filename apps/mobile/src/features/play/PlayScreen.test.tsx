@@ -44,7 +44,8 @@ describe('PlayScreen', () => {
   it('plays a term by voice: close, then correct, then the next term', async () => {
     await render(<PlayScreen topicId={TOPIC} />);
     await act(async () => {}); // permission check resolves
-    expect(screen.getByText('Name the term')).toBeOnTheScreen();
+    expect(screen.getByText('Name the glowing part')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/An animal cell.*The part to name is glowing/)).toBeOnTheScreen();
     expect(screen.getByLabelText('3 lives left')).toBeOnTheScreen();
 
     await tapMicAndWait();
@@ -55,6 +56,7 @@ describe('PlayScreen', () => {
     await tapMicAndWait();
     expect(await screen.findByText('Nucleus. Nailed it.')).toBeOnTheScreen();
     expect(screen.getByText('QUICK FACT')).toBeOnTheScreen();
+    expect(screen.getByLabelText(/It's Nucleus\./)).toBeOnTheScreen(); // "?" became the term
 
     await fireEvent.press(screen.getByText('Next term'));
     expect(screen.getByText('2 / 6')).toBeOnTheScreen();
@@ -69,11 +71,13 @@ describe('PlayScreen', () => {
     expect(await screen.findByText('Nucleus. Nailed it.')).toBeOnTheScreen();
   });
 
-  it('a hint reveals a letter (terms without pictures already show the clue)', async () => {
+  it('with a picture, the first hint shows the clue and the next reveals a letter', async () => {
     await render(<PlayScreen topicId={TOPIC} />);
     await act(async () => {});
     expect(screen.getByLabelText('Answer: N, then 6 hidden letters')).toBeOnTheScreen();
-    await fireEvent.press(screen.getByLabelText('Hint: Letter. 3 left'));
+    await fireEvent.press(screen.getByLabelText('Hint: Clue. 3 left'));
+    expect(screen.getByText('The control center of the cell.')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByLabelText('Hint: Letter. 2 left'));
     expect(screen.getByLabelText('Answer: N, U, then 5 hidden letters')).toBeOnTheScreen();
   });
 
