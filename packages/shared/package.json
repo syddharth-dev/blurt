@@ -1,0 +1,43 @@
+{
+  "name": "@blurt/shared",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Brand tokens, Zod schemas and the answer matcher shared by the app, dashboard and API.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "default": "./dist/theme/index.js"
+    },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "default": "./dist/schemas/index.js"
+    },
+    "./matcher": {
+      "types": "./dist/matcher/index.d.ts",
+      "default": "./dist/matcher/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "oxlint": "^1.94.0",
+    "vitest": "^4.1.12"
+  }
+}

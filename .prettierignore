@@ -1,0 +1,14 @@
+pnpm-lock.yaml
+node_modules
+dist
+.next
+.expo
+coverage
+apps/mobile/ios
+apps/mobile/android
+assets/**/*.svg
+docs
+*.md
+apps/api/src/generated
+apps/dashboard/src/styles/tokens.css
+.turbo

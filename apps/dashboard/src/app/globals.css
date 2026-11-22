@@ -1,0 +1,10 @@
+@import 'tailwindcss';
+@import '../styles/tokens.css';
+
+/* Dashboard design (docs/TEACHER_DASHBOARD.md → "Design"): light lilac background,
+   violet as the main action colour on white, no ambient animation. */
+body {
+  background: var(--color-lilac);
+  color: var(--color-night);
+  font-family: var(--font-sans);
+}

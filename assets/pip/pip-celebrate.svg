@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="Pip celebrating">
+    <ellipse cx="100" cy="190" rx="46" ry="6" fill="#0B0424" opacity="0.22"></ellipse>
+    <g>
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 -16;0 0" dur="0.7s" repeatCount="indefinite"></animateTransform>
+      <g display="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none">
+        <path d="M22 40 Q12 56 22 72"><animate attributeName="opacity" values="0;1;0" dur="1s" repeatCount="indefinite"></animate></path>
+        <path d="M10 32 Q-4 56 10 80"><animate attributeName="opacity" values="0;1;0" dur="1s" begin="0.3s" repeatCount="indefinite"></animate></path>
+        <path d="M178 40 Q188 56 178 72"><animate attributeName="opacity" values="0;1;0" dur="1s" begin="0.15s" repeatCount="indefinite"></animate></path>
+        <path d="M190 32 Q204 56 190 80"><animate attributeName="opacity" values="0;1;0" dur="1s" begin="0.45s" repeatCount="indefinite"></animate></path>
+      </g>
+      <g transform="rotate(-20 66 90)">
+        <ellipse cx="66" cy="54" rx="19" ry="42" fill="#FFC93C"></ellipse>
+        <ellipse cx="66" cy="58" rx="9" ry="28" fill="#FF7A59"></ellipse>
+      </g>
+      <g transform="rotate(20 134 90)">
+        <ellipse cx="134" cy="54" rx="19" ry="42" fill="#FFC93C"></ellipse>
+        <ellipse cx="134" cy="58" rx="9" ry="28" fill="#FF7A59"></ellipse>
+      </g>
+      <g display="none" fill="#F5B21E">
+        <ellipse cx="42" cy="138" rx="11" ry="17" transform="rotate(20 42 138)"></ellipse>
+        <ellipse cx="158" cy="138" rx="11" ry="17" transform="rotate(-20 158 138)"></ellipse>
+      </g>
+      <g display="none" fill="#F5B21E">
+        <ellipse cx="42" cy="138" rx="11" ry="17" transform="rotate(20 42 138)"></ellipse>
+        <g>
+          <animateTransform attributeName="transform" type="rotate" values="-10 150 118;22 150 118;-10 150 118" dur="0.9s" repeatCount="indefinite"></animateTransform>
+          <ellipse cx="166" cy="96" rx="11" ry="18" transform="rotate(30 166 96)"></ellipse>
+        </g>
+      </g>
+      <g display="inline" fill="#F5B21E">
+        <ellipse cx="36" cy="92" rx="11" ry="18" transform="rotate(-30 36 92)"></ellipse>
+        <ellipse cx="164" cy="92" rx="11" ry="18" transform="rotate(30 164 92)"></ellipse>
+      </g>
+      <g display="none" fill="#F5B21E">
+        <ellipse cx="42" cy="138" rx="11" ry="17" transform="rotate(20 42 138)"></ellipse>
+        <ellipse cx="160" cy="92" rx="12" ry="17" transform="rotate(40 160 92)"></ellipse>
+      </g>
+      <ellipse cx="100" cy="122" rx="64" ry="58" fill="#FFC93C"></ellipse>
+      <ellipse cx="100" cy="142" rx="36" ry="28" fill="#FFE59A"></ellipse>
+      <ellipse cx="78" cy="177" rx="17" ry="8" fill="#F5B21E"></ellipse>
+      <ellipse cx="122" cy="177" rx="17" ry="8" fill="#F5B21E"></ellipse>
+      <path d="M40 92 Q100 62 160 92" fill="none" stroke="#160C3A" stroke-width="5" stroke-linecap="round"></path>
+      <circle cx="82" cy="78" r="14" fill="#8FD8FF" stroke="#160C3A" stroke-width="4"></circle>
+      <circle cx="118" cy="78" r="14" fill="#8FD8FF" stroke="#160C3A" stroke-width="4"></circle>
+      <path d="M96 78 L104 78" stroke="#160C3A" stroke-width="4" stroke-linecap="round"></path>
+      <path d="M75 73 Q79 69 84 70" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"></path>
+      <path d="M111 73 Q115 69 120 70" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"></path>
+      <g display="none">
+        <ellipse cx="80" cy="108" rx="14" ry="16" fill="#FFFFFF"><animate attributeName="ry" values="16;16;1.5;16" keyTimes="0;0.9;0.95;1" dur="4s" repeatCount="indefinite"></animate></ellipse>
+        <ellipse cx="120" cy="108" rx="14" ry="16" fill="#FFFFFF"><animate attributeName="ry" values="16;16;1.5;16" keyTimes="0;0.9;0.95;1" dur="4s" repeatCount="indefinite"></animate></ellipse>
+        <ellipse cx="80" cy="110" rx="8" ry="9" fill="#160C3A"><animate attributeName="ry" values="9;9;1;9" keyTimes="0;0.9;0.95;1" dur="4s" repeatCount="indefinite"></animate></ellipse>
+        <ellipse cx="120" cy="110" rx="8" ry="9" fill="#160C3A"><animate attributeName="ry" values="9;9;1;9" keyTimes="0;0.9;0.95;1" dur="4s" repeatCount="indefinite"></animate></ellipse>
+        <circle cx="83" cy="106" r="3" fill="#FFFFFF"></circle>
+        <circle cx="123" cy="106" r="3" fill="#FFFFFF"></circle>
+      </g>
+      <g display="inline" fill="none" stroke="#160C3A" stroke-width="5" stroke-linecap="round">
+        <path d="M68 112 Q80 98 92 112"></path>
+        <path d="M108 112 Q120 98 132 112"></path>
+      </g>
+      <ellipse cx="62" cy="132" rx="9" ry="6" fill="#FF7A59" opacity="0.55"></ellipse>
+      <ellipse cx="138" cy="132" rx="9" ry="6" fill="#FF7A59" opacity="0.55"></ellipse>
+      <path d="M84 130 Q100 158 116 130 Z" fill="#160C3A" stroke="#160C3A" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path display="none" d="M160 70 Q168 84 160 90 Q152 84 160 70 Z" fill="#8FD8FF">
+        <animate attributeName="opacity" values="1;0.4;1" dur="1.2s" repeatCount="indefinite"></animate>
+      </path>
+    </g>
+    <g display="inline" fill="#FFFFFF">
+      <path d="M24 30 l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4 z"><animate attributeName="opacity" values="0;1;0" dur="1.1s" repeatCount="indefinite"></animate></path>
+      <path d="M176 22 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3 l8 -3 z" fill="#FFC93C"><animate attributeName="opacity" values="1;0;1" dur="1.1s" repeatCount="indefinite"></animate></path>
+      <path d="M186 140 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z"><animate attributeName="opacity" values="0;1;0" dur="0.9s" begin="0.3s" repeatCount="indefinite"></animate></path>
+    </g>
+  </svg>

@@ -1,0 +1,50 @@
+# Screens
+
+All screens are designed at 390×844 pt (a standard modern phone) and must flex for smaller and larger phones. Use safe-area insets, not fixed top padding.
+
+## 1. Home
+Background: `scene-day`, two drifting atoms, twinkling sparkles.
+
+1. **Top bar**: avatar (initial on coral with a sunny ring), streak pill (flame + "12 days"), gems pill.
+2. **Wordmark**: `blurt` + a wiggling sunny `!`.
+3. **Pip (wave)** with a speech bubble: "Hey, I'm Pip." / "Ready to name some science?"
+4. **Daily challenge card** (white): coral "Daily · 6h left" tag, topic title, chips (`10 terms`, `Grade 8`, `+150 XP`), a fanned stack of three mini picture cards (the front one shows "?"), and a primary button "Let's blurt" that opens Play.
+5. **Your topics**: a horizontal, snap-scrolling row of topic cards (see BRAND components). The third card deliberately peeks in from the edge.
+6. **Tab bar** (white, floating): Play · Topics · League · Me.
+
+## 2. Play (one screen, five states)
+Background: `scene-lab-night`, drifting atoms, stars.
+
+Layout, top to bottom: HUD → picture card → letter tiles → Pip + bubble → control dock → "Type it instead".
+
+- **HUD**: quit (X), topic name + "3 / 10", a 10-segment progress bar (done = sunny, current = pulsing white), lives (coral heart + count).
+- **Picture card**: 250 px white card floating over a slowly spinning sunburst. Inside is the **picture** (a built-in diagram or one a teacher uploaded) with the target part highlighted. The app draws the highlight from the term's stored box (see `TEACHER_DASHBOARD.md`), by a pulsing sunny glow, a rotating dashed ring, and a leader line to a "?" badge. A coral tag at top-left shows "Grade 8 · Chemistry".
+- **Letter tiles**: one per letter. The first letter is revealed by default.
+
+| State | Pip | Bubble | Dock / bottom |
+|---|---|---|---|
+| **Idle** | idle | "Name the glowing part" + "Tap the mic and say the term." | Hint (Clue) · Mic "Tap to speak" · Skip |
+| **Listening** | listening | "Listening…" + live partial transcript in a dashed "Heard" chip | Mic turns coral with a waveform and rings, "Tap to stop" |
+| **Evaluating** | listening | Same, final transcript shown | Mic disabled for up to ~300 ms while the server responds |
+| **Close** | oops | "Close — that's the adjective" + reason + coral "Heard: nuclear" chip + **"nu·cle·us" pronunciation button** | Tiles shake. Mic "Try again". One life lost. |
+| **Wrong (confusable)** | oops | "That's the proton. This one has no charge." | Same as close |
+| **Correct** | celebrate | "Nucleus. Nailed it." + "+100 · 3 in a row" | Tiles pop yellow, the "?" badge becomes the term, "+100" rises, confetti. Dock is replaced by a **Quick fact** card + "Next term" button. |
+
+**Hints:** the first press shows a **clue** in the bubble, and each later press reveals the next letter. The button label shows what you'll get next (Clue → Letter). Each press costs one hint.
+
+**Type it instead** opens a text field with the same matching. Always available (noisy room, mic denied, speech differences).
+
+**Mic permission**: on the very first round, show Pip (listening) with a one-line explanation *before* the OS prompt. If permission is denied, Play switches to typed mode with a link to Settings.
+
+## 3. Round summary
+Background: `scene-day`, big slow sunburst, confetti.
+
+1. Three stars pop in one after another (earned stars are sunny, the missing star is glass).
+2. Pip (celebrate) + "Amazing!" + score "8/10".
+3. XP bar animates from the old to the new value, with the level shown.
+4. Stats: First try · Best streak · To practise.
+5. **Term review list**: coloured dot (violet = first try, sunny = needed a hint or retry, coral = missed), term, one-line meaning, and a note (e.g. *Heard "ice a tope"*).
+6. Buttons: "Play again" (primary), "Practise 2 tricky terms" (outline).
+
+## 4. Screens still to design
+Onboarding (choose grade, **enter class code**) · Sign in · Topic list and topic detail (assigned topics with due dates first) · League (weekly leaderboard) · Profile and settings (speech language, reduce motion, sound). Teacher dashboard pages are listed in `TEACHER_DASHBOARD.md`.

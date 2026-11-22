@@ -1,0 +1,209 @@
+// Source of truth: docs/DATA_AND_API.md → "Prisma schema". Keep the two in sync.
+// Prisma 7: the connection URL lives in prisma.config.ts, not here.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+enum Status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+enum Visibility {  // LIBRARY = shared with every school
+  PRIVATE
+  CLASS
+  LIBRARY
+}
+enum VariantKind {
+  ACCEPT
+  CLOSE
+}
+enum PictureState {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model School {
+  id      String  @id @default(cuid())
+  name    String
+  users   User[]
+  classes Class[]
+}
+
+model User {
+  id           String   @id            // = Supabase auth user id
+  role         Role     @default(STUDENT)
+  name         String
+  schoolId     String?
+  school       School?  @relation(fields: [schoolId], references: [id])
+  grade        Int?
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  streak       Int      @default(0)
+  lastPlayedOn DateTime?
+  teaches      Class[]      @relation("ClassTeacher")
+  enrollments  Enrollment[]
+  topics       Topic[]
+  pictures     Picture[]
+  rounds       Round[]
+  mastery      TermMastery[]
+}
+
+model Class {
+  id          String   @id @default(cuid())
+  name        String              // "Grade 8 – Rizal"
+  code        String   @unique    // 6-char join code, e.g. "K7Q2MX"
+  schoolId    String
+  school      School   @relation(fields: [schoolId], references: [id])
+  teacherId   String
+  teacher     User     @relation("ClassTeacher", fields: [teacherId], references: [id])
+  enrollments Enrollment[]
+  topics      ClassTopic[]
+}
+
+model Enrollment {
+  classId   String
+  studentId String
+  class     Class @relation(fields: [classId], references: [id])
+  student   User  @relation(fields: [studentId], references: [id])
+  joinedAt  DateTime @default(now())
+  @@id([classId, studentId])
+}
+
+model ClassTopic {
+  classId String
+  topicId String
+  dueAt   DateTime?
+  class   Class @relation(fields: [classId], references: [id])
+  topic   Topic @relation(fields: [topicId], references: [id])
+  @@id([classId, topicId])
+}
+
+model Subject {
+  id     String  @id @default(cuid())
+  name   String            // "Chemistry"
+  color  String            // brand token name, e.g. "coral"
+  topics Topic[]
+}
+
+model Topic {
+  id             String     @id @default(cuid())
+  subjectId      String
+  subject        Subject    @relation(fields: [subjectId], references: [id])
+  ownerId        String
+  owner          User       @relation(fields: [ownerId], references: [id])
+  title          String
+  grade          Int
+  curriculumCode String?
+  unlockLevel    Int        @default(1)
+  status         Status     @default(DRAFT)
+  visibility     Visibility @default(CLASS)
+  terms          Term[]
+  classes        ClassTopic[]
+  updatedAt      DateTime   @updatedAt
+}
+
+model Picture {
+  id         String       @id @default(cuid())
+  ownerId    String
+  owner      User         @relation(fields: [ownerId], references: [id])
+  storageKey String                 // path in Supabase Storage
+  url        String?                // processed WebP (or sanitized SVG) on the CDN
+  thumbUrl   String?
+  width      Int?
+  height     Int?
+  state      PictureState @default(UPLOADING)
+  altText    String?                // describes the picture without giving the answer
+  terms      Term[]
+}
+
+model Term {
+  id         String   @id @default(cuid())
+  topicId    String
+  topic      Topic    @relation(fields: [topicId], references: [id])
+  position   Int
+  canonical  String            // "nucleus"
+  display    String            // "Nucleus"
+  syllables  String            // "nu·cle·us"
+  clue       String
+  fact       String
+  audioUrl   String?           // generated pronunciation clip
+  pictureId  String
+  picture    Picture  @relation(fields: [pictureId], references: [id])
+  /// Highlight box as fractions of the picture: { "shape": "ellipse"|"rect", "x": 0.41, "y": 0.38, "w": 0.18, "h": 0.2 }
+  highlight  Json
+  difficulty Int      @default(1)
+  status     Status   @default(DRAFT)
+  version    Int      @default(1)
+  variants   TermVariant[]
+  confusables Confusable[]
+  updatedAt  DateTime @updatedAt
+}
+
+model TermVariant {
+  id     String      @id @default(cuid())
+  termId String
+  term   Term        @relation(fields: [termId], references: [id])
+  text   String
+  kind   VariantKind
+  reason String?     // shown when kind = CLOSE
+}
+
+model Confusable {
+  id        String @id @default(cuid())
+  termId    String
+  term      Term   @relation(fields: [termId], references: [id])
+  otherText String
+  feedback  String
+}
+
+model Round {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  topicId   String
+  classId   String?            // set when played as a class assignment
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  score     Int      @default(0)
+  attempts  Attempt[]
+}
+
+model Attempt {
+  id             String   @id @default(cuid())
+  roundId        String
+  round          Round    @relation(fields: [roundId], references: [id])
+  termId         String
+  termVersion    Int
+  input          String[]
+  inputMode      String            // "voice" | "typed"
+  verdict        String            // correct | close | wrong | skipped
+  hintsUsed      Int
+  ms             Int
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+}
+
+model TermMastery {
+  userId  String
+  termId  String
+  correct Int      @default(0)
+  missed  Int      @default(0)
+  dueAt   DateTime
+  user    User     @relation(fields: [userId], references: [id])
+  @@id([userId, termId])
+}
