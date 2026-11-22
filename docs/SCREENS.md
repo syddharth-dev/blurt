@@ -10,7 +10,9 @@ Background: `scene-day`, two drifting atoms, twinkling sparkles.
 3. **Pip (wave)** with a speech bubble: "Hey, I'm Pip." / "Ready to name some science?"
 4. **Daily challenge card** (white): coral "Daily · 6h left" tag, topic title, chips (`10 terms`, `Grade 8`, `+150 XP`), a fanned stack of three mini picture cards (the front one shows "?"), and a primary button "Let's blurt" that opens Play.
 5. **Your topics**: a horizontal, snap-scrolling row of topic cards (see BRAND components). The third card deliberately peeks in from the edge.
-6. **Tab bar** (white, floating): Play · Topics · League · Me.
+6. **Tab bar** (white, floating): Play · Topics · League · Me. (The design canvas labels the second tab "Decks"; these docs say Topics, and the app follows the docs.)
+
+**Built (design pass, before Phase 3):** `apps/mobile/src/features/home/`. The daily topic rotates by local date, and "Xh left" counts down to local midnight. The "+150 XP" daily bonus (`DAILY_BONUS_XP`) is shown now and awarded by the server from Phase 3. Streak, gems and topic progress show 0 until progress is saved (Phase 3). Topics lists every topic plus a mixed round. League and Me are placeholders, and Me holds the developer links in development builds only.
 
 ## 2. Play (one screen, five states)
 Background: `scene-lab-night`, drifting atoms, stars.
@@ -47,6 +49,12 @@ Background: `scene-day`, big slow sunburst, confetti.
 4. Stats: First try · Best streak · To practise.
 5. **Term review list**: coloured dot (violet = first try, sunny = needed a hint or retry, coral = missed), term, one-line meaning, and a note (e.g. *Heard "ice a tope"*).
 6. Buttons: "Play again" (primary), "Practise 2 tricky terms" (outline).
+
+**Built (design pass):** `apps/mobile/src/features/summary/`.
+- **Stars:** 3 at 90 %+ right, 2 at 60 %+, 1 for any right answer (`starsFor` in `packages/shared/src/progress`).
+- **Headline** by stars: Amazing! / Nice work! / Good start! / Keep going!. When the round ended out of lives: So close! / Good effort!.
+- **"To practise"** counts every term that wasn't a first try. "Practise N tricky terms" starts a practice round with exactly those terms (`/play/practice?ids=…`).
+- **XP bar** uses the level rule (every 500 XP; pending confirmation). The XP total lasts only for the session until Phase 3 saves it.
 
 ## 4. Screens still to design
 Onboarding (choose grade, **enter class code**) · Sign in · Topic list and topic detail (assigned topics with due dates first) · League (weekly leaderboard) · Profile and settings (speech language, reduce motion, sound). Teacher dashboard pages are listed in `TEACHER_DASHBOARD.md`.

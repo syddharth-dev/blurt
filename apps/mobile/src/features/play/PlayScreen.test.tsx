@@ -106,6 +106,13 @@ describe('PlayScreen', () => {
     expect(router.replace).not.toHaveBeenCalled();
   });
 
+  it('a practice round plays exactly the given terms', async () => {
+    await render(<PlayScreen topicId="practice" termIds={['chem-isotope', 'bio-gene']} />);
+    await act(async () => {});
+    expect(screen.getByText('1 / 2')).toBeOnTheScreen();
+    expect(screen.getByText('PRACTICE')).toBeOnTheScreen();
+  });
+
   it('shows a friendly message for an unknown topic', async () => {
     await render(<PlayScreen topicId="nope" />);
     expect(

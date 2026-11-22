@@ -36,11 +36,24 @@ import { nextHint, phaseOf, progressLabel, tilesFor } from './machine/roundView'
 /** Until the Profile screen adds a speech-language setting (SCREENS.md → still to design). */
 const SPEECH_LANG = 'en-US';
 export const MIX_TOPIC_ID = 'mix';
+export const PRACTICE_TOPIC_ID = 'practice';
 const SUNBURST = sizes.pictureCard * 1.52;
 
-type RoundSetup = { topicId: string; title: string; subject: string; terms: typeof GRADE8_TERMS };
+type RoundSetup = {
+  topicId: string;
+  title: string;
+  subject: string;
+  terms: typeof GRADE8_TERMS;
+  /** Practice rounds replay specific terms */
+  termIds?: string[];
+};
 
-function loadRound(topicId: string): RoundSetup | null {
+function loadRound(topicId: string, termIds?: string[]): RoundSetup | null {
+  if (topicId === PRACTICE_TOPIC_ID) {
+    const terms = GRADE8_TERMS.filter((t) => termIds?.includes(t.id));
+    if (!terms.length) return null;
+    return { topicId, title: 'Practice', subject: 'Mixed', terms, termIds };
+  }
   if (topicId === MIX_TOPIC_ID) {
     return {
       topicId,
@@ -59,8 +72,8 @@ function loadRound(topicId: string): RoundSetup | null {
   };
 }
 
-export function PlayScreen({ topicId }: { topicId: string }) {
-  const [round] = useState(() => loadRound(topicId));
+export function PlayScreen({ topicId, termIds }: { topicId: string; termIds?: string[] }) {
+  const [round] = useState(() => loadRound(topicId, termIds));
   if (!round) {
     return (
       <Placeholder title="Hmm." body="That topic isn't here. Pick another one from Home.">
@@ -125,6 +138,7 @@ function RoundView({ round }: { round: RoundSetup }) {
     setLast({
       roundId,
       topicId: round.topicId,
+      termIds: round.termIds,
       topicTitle: round.title,
       subject: round.subject,
       ...out,

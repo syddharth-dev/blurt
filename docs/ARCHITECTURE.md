@@ -129,7 +129,8 @@ packages/shared/src/
   theme/      # brand tokens (the code copy of BRAND.md) + contrast helper
   schemas/    # Zod request/response shapes (DATA_AND_API.md)
   matcher/    # AnswerMatcher (SPEECH_AND_MATCHING.md)
-  content/    # bundled term sets (Phase 1–2 local content; later the seed data)
+  content/    # bundled term sets, diagrams, topics (Phase 1–2 local content; later the seed data)
+  progress/   # level and star rules (the server decides from Phase 3; the app previews)
 ```
 Built with `tsc` to `dist/`, and imported as `@blurt/shared`, `@blurt/shared/theme`, `@blurt/shared/schemas` or `@blurt/shared/matcher`. Turbo builds it before anything that depends on it typechecks, lints, tests or runs.
 

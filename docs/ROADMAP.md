@@ -13,6 +13,9 @@ Status: built. The shared matcher (`packages/shared/src/matcher`), the speech po
 ### Phase 2 — Playable round (weeks 2–4) ✅
 Round state machine ✅, Play screen with all states, letter tiles, hints, Type it instead (Play screen ✅, picture card with 7 bundled diagrams ✅), Pip built with react-native-svg + Reanimated (all five moods, see MASCOT.md) ✅, the night scene and ambient motion ✅. Content is still local JSON.
 
+### Design pass (between Phase 2 and 3) ✅
+The Home (top bar, daily challenge card, topic cards, tab bar) and the full Round summary from Phase 5 were pulled forward so the app matches the design canvas. Play was polished to the canvas too. Values that need saved progress show 0 until Phase 3.
+
 ### Phase 3 — Online (weeks 4–6)
 Auth, content API, rounds/attempts API with the server-side matcher, XP, streaks, summary screen, offline queue, prefetching a topic's assets.
 

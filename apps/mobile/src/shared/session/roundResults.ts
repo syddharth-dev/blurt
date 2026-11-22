@@ -4,6 +4,8 @@ import { create } from 'zustand';
 export type FinishedRound = {
   roundId: string;
   topicId: string;
+  /** Set for practice rounds, so "Play again" replays the same terms */
+  termIds?: string[];
   topicTitle: string;
   /** A subject name, or "Mixed" for the daily mix */
   subject: string;
@@ -21,12 +23,21 @@ export type FinishedRound = {
   }[];
 };
 
+export type SummarisedRound = FinishedRound & { xpBefore: number; xpAfter: number };
+
 type State = {
-  last: FinishedRound | null;
+  last: SummarisedRound | null;
+  /** XP earned this session. Saved on the server from Phase 3; until then it resets on restart. */
+  totalXp: number;
   setLast: (round: FinishedRound) => void;
 };
 
 export const useRoundResults = create<State>((set) => ({
   last: null,
-  setLast: (round) => set({ last: round }),
+  totalXp: 0,
+  setLast: (round) =>
+    set((s) => ({
+      last: { ...round, xpBefore: s.totalXp, xpAfter: s.totalXp + round.score },
+      totalXp: s.totalXp + round.score,
+    })),
 }));

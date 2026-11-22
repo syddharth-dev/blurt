@@ -25,6 +25,10 @@
     "./content": {
       "types": "./dist/content/index.d.ts",
       "default": "./dist/content/index.js"
+    },
+    "./progress": {
+      "types": "./dist/progress/index.d.ts",
+      "default": "./dist/progress/index.js"
     }
   },
   "files": [
