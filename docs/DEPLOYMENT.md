@@ -53,6 +53,9 @@ Every push to `main` then deploys automatically. Use a `staging` branch for the 
 4. In Supabase Storage, create a `pictures` bucket: uploads only through signed URLs from the API, public read for processed images only.
 5. The API also runs the **worker** for picture processing and pronunciation audio. On Railway, add it as a second service from the same code with start command `node dist/worker.js`, sharing the same environment variables.
 
+## Sign-in email (Supabase Auth)
+Students sign in with their email and a 6-digit code. The branded email is `supabase/templates/magic-link.html`. Paste it into **Supabase → Authentication → Emails → Templates → Magic Link** (Supabase sends that template for code sign-ins; `{{ .Token }}` is the code). Suggested subject: `Your Blurt! sign-in code`. Do the same for the staging and production projects. The email says the code expires in 1 hour, so keep **Authentication → Providers → Email → Email OTP expiration** at 3600 seconds, or change the sentence to match. Supabase's built-in email service only sends a few emails per hour: connect your own SMTP provider (Authentication → Emails → SMTP settings) before a classroom pilot.
+
 ## Costs
 Railway and Supabase both have free or low-cost starting tiers and usage-based paid plans, which change over time, so check their pricing pages. Watch two things: keep one small API instance until real traffic needs more, and use Supabase's connection pooler so the API doesn't run out of database connections.
 
