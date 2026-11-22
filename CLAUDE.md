@@ -33,5 +33,5 @@ Monorepo: pnpm workspaces + Turborepo. `apps/mobile`, `apps/api`, `apps/dashboar
 - One package: `pnpm --filter <mobile|api|dashboard|@blurt/shared> <script>`
 - Mobile native packages: `cd apps/mobile && npx expo install <pkg>` (never `pnpm add`)
 - After changing tokens in `packages/shared/src/theme`: `pnpm --filter dashboard gen:tokens`
-- Prisma: `pnpm --filter api prisma:validate` · `pnpm --filter api db:migrate` (needs `DIRECT_URL`)
+- Prisma: `pnpm --filter api prisma:validate` · `pnpm --filter api db:migrate` (needs `DIRECT_URL`) · `pnpm --filter api db:seed` (starter library, safe to rerun)
 - Env: copy each app's `.env.example` to `.env` (API) or `.env.local` (mobile, dashboard)

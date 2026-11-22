@@ -148,7 +148,9 @@ apps/api/src/
   admin/        # teacher invites, library promotion, schools (role: admin)
   common/       # filters, interceptors, config, prisma service
 ```
-`auth/`, `common/` and `health/` exist now. Each other module is created in the roadmap phase that needs it. Every route needs a Supabase JWT unless it's marked `@Public()`.
+Built so far: `auth/` (Supabase JWT guard with a swappable `JwtVerifier`, then `RolesGuard` for `@Roles(...)`; roles always come from our database), `users/` (`/me`; the row is created on first sign-in), `content/` (`/subjects`), `gameplay/` (rounds, attempts, skip, finish), `progress/` (XP, level, streak), `common/` and `health/`. The other modules are created in the phase that needs them. Every route needs a Supabase JWT unless it's marked `@Public()`. Request bodies are validated with the shared Zod schemas through Nest's `StandardSchemaValidationPipe`. Rate limits use `@nestjs/throttler`: 300 requests a minute, and 40 a minute for answers. It's in memory for now and moves to Redis in Phase 5.
+
+Tests: services are unit-tested against in-memory repositories (`apps/api/test/fakes.ts`). `test/app.e2e-spec.ts` runs the whole HTTP stack (guards, validation, error shape) with only the token check and the repositories faked.
 
 Inside each module: `controller` (HTTP, DTO validation) → `service` (business rules) → `repository` (Prisma queries). Controllers never call Prisma directly.
 

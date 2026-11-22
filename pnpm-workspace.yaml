@@ -9,3 +9,4 @@ allowBuilds:
   '@parcel/watcher': false
   sharp: false
   unrs-resolver: false
+  esbuild: false

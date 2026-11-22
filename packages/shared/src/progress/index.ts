@@ -1,8 +1,12 @@
 /**
  * Progress rules shared by the app (previews) and the API (authoritative, Phase 3).
- * Level rule (default, pending confirmation): every 500 XP is a level; level 1 starts at 0.
+ * Levels: every 500 XP is a level; level 1 starts at 0.
+ * Streak: +1 per day played, by the student's local date; a missed day resets it.
  */
 export const XP_PER_LEVEL = 500;
+
+/** Per-round budgets (SCREENS.md → Play): lives belong to the whole round. */
+export const ROUND_RULES = { lives: 3, hints: 3, skips: 2, termsPerRound: 10 } as const;
 
 export type LevelInfo = {
   level: number;
@@ -28,4 +32,43 @@ export function starsFor(right: number, total: number): 0 | 1 | 2 | 3 {
   if (r >= 0.9) return 3;
   if (r >= 0.6) return 2;
   return 1;
+}
+
+/** XP for a correct answer: 100, minus 25 per hint or miss on that term, never below 25. */
+export const XP_RULES = { base: 100, penalty: 25, min: 25 } as const;
+
+export function xpFor(hints: number, misses: number): number {
+  return Math.max(XP_RULES.min, XP_RULES.base - XP_RULES.penalty * (hints + misses));
+}
+
+/** A local calendar date, "YYYY-MM-DD". */
+export type LocalDateString = string;
+
+function dayNumber(date: LocalDateString): number {
+  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
+  return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
+}
+
+/**
+ * Streak after playing on `today`: same day → unchanged; the next day → +1;
+ * a gap (or the first game) → 1. A date before the last one played changes nothing.
+ */
+export function nextStreak(
+  streak: number,
+  lastPlayedOn: LocalDateString | null,
+  today: LocalDateString,
+): number {
+  if (!lastPlayedOn) return 1;
+  const gap = dayNumber(today) - dayNumber(lastPlayedOn);
+  if (gap <= 0) return Math.max(streak, 1);
+  if (gap === 1) return streak + 1;
+  return 1;
+}
+
+/** The phone's local date, for the streak. */
+export function localDateOf(now: Date): LocalDateString {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }

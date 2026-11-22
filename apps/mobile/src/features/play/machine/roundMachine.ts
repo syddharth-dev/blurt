@@ -1,5 +1,6 @@
 import type { ContentTerm } from '@blurt/shared/content';
 import { matchAnswer, type MatchResult } from '@blurt/shared/matcher';
+import { ROUND_RULES, xpFor } from '@blurt/shared/progress';
 import type { InputMode } from '@blurt/shared/schemas';
 import { assign, fromPromise, setup } from 'xstate';
 import type { SpeechError } from '@/shared/speech';
@@ -15,15 +16,10 @@ import type { SpeechError } from '@/shared/speech';
  *   Phase 3 swaps in the API call, where the server's verdict is authoritative (AGENTS.md rule 3).
  */
 
-export const ROUND_CONFIG = {
-  /** Lives for the whole round; a close or wrong answer costs one. At 0 the round ends. */
-  lives: 3,
-  /** Hint presses per round: the first press on a term shows the clue, later presses a letter. */
-  hints: 3,
-  skips: 2,
-  termsPerRound: 10,
-  xp: { base: 100, penalty: 25, min: 25 },
-} as const;
+/** Lives, hints, skips and round length: shared with the server (@blurt/shared/progress). */
+export const ROUND_CONFIG = ROUND_RULES;
+
+export { xpFor };
 
 export type RoundConfig = { lives: number; hints: number; skips: number };
 
@@ -97,11 +93,6 @@ export type EvaluateInput = {
 /** Number of letters on the tiles (spaces and punctuation aren't tiles). */
 export function letterCount(term: ContentTerm): number {
   return term.display.replace(/[^\p{L}\p{N}]/gu, '').length;
-}
-
-export function xpFor(hints: number, misses: number): number {
-  const { base, penalty, min } = ROUND_CONFIG.xp;
-  return Math.max(min, base - penalty * (hints + misses));
 }
 
 /** Terms without a picture show their clue on the card from the start. */
