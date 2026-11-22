@@ -57,4 +57,4 @@ Background: `scene-day`, big slow sunburst, confetti.
 - **XP bar** uses the level rule (every 500 XP; pending confirmation). The XP total lasts only for the session until Phase 3 saves it.
 
 ## 4. Screens still to design
-Onboarding (choose grade, **enter class code**) · Sign in · Topic list and topic detail (assigned topics with due dates first) · League (weekly leaderboard) · Profile and settings (speech language, reduce motion, sound). Teacher dashboard pages are listed in `TEACHER_DASHBOARD.md`.
+Onboarding (choose grade, **enter class code**) · Sign in (built in Phase 3: email, then a 6-digit code, with Pip waving; the design is a first pass, since it's not on the canvas) · Topic list and topic detail (assigned topics with due dates first) · League (weekly leaderboard) · Profile and settings (speech language, reduce motion, sound). Teacher dashboard pages are listed in `TEACHER_DASHBOARD.md`.

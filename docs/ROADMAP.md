@@ -16,7 +16,7 @@ Round state machine ✅, Play screen with all states, letter tiles, hints, Type 
 ### Design pass (between Phase 2 and 3) ✅
 The Home (top bar, daily challenge card, topic cards, tab bar) and the full Round summary from Phase 5 were pulled forward so the app matches the design canvas. Play was polished to the canvas too. Values that need saved progress show 0 until Phase 3.
 
-### Phase 3 — Online (weeks 4–6)
+### Phase 3 — Online (weeks 4–6) (steps 1–3 ✅: contracts, API, app online with sign-in)
 Auth, content API, rounds/attempts API with the server-side matcher, XP, streaks, summary screen, offline queue, prefetching a topic's assets.
 
 ### Phase 4 — Teacher dashboard (weeks 6–8)

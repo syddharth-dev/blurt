@@ -29,15 +29,17 @@ type State = {
   last: SummarisedRound | null;
   /** XP earned this session. Saved on the server from Phase 3; until then it resets on restart. */
   totalXp: number;
-  setLast: (round: FinishedRound) => void;
+  /** `xp` comes from the server when the round was saved online. */
+  setLast: (round: FinishedRound, xp?: { before: number; after: number }) => void;
 };
 
 export const useRoundResults = create<State>((set) => ({
   last: null,
   totalXp: 0,
-  setLast: (round) =>
-    set((s) => ({
-      last: { ...round, xpBefore: s.totalXp, xpAfter: s.totalXp + round.score },
-      totalXp: s.totalXp + round.score,
-    })),
+  setLast: (round, xp) =>
+    set((s) => {
+      const before = xp?.before ?? s.totalXp;
+      const after = xp?.after ?? s.totalXp + round.score;
+      return { last: { ...round, xpBefore: before, xpAfter: after }, totalXp: after };
+    }),
 }));

@@ -66,6 +66,8 @@ export type RoundContext = {
   lastResult: MatchResult | null;
   lastXp: number;
   speechError: SpeechError | null;
+  /** When the student started this answer (mic tap or typing). */
+  answerStartedAt: number | null;
   endedBy: RoundSummary['endedBy'] | null;
 };
 
@@ -88,6 +90,10 @@ export type EvaluateInput = {
   term: ContentTerm;
   alternatives: string[];
   inputMode: InputMode;
+  /** Hints used on this term so far (the server charges them against XP). */
+  hintsUsed: number;
+  /** Time from starting to answer until the answer was in. */
+  ms: number;
 };
 
 /** Number of letters on the tiles (spaces and punctuation aren't tiles). */
@@ -112,6 +118,7 @@ function freshTerm(term: ContentTerm | undefined) {
     lastResult: null,
     lastXp: 0,
     speechError: null,
+    answerStartedAt: null,
   } satisfies Partial<RoundContext>;
 }
 
@@ -134,6 +141,8 @@ export const roundMachine = setup({
     startListening: () => {},
     stopListening: () => {},
     abortListening: () => {},
+    /** Tell the server about a skip (online rounds). */
+    reportSkip: (_: unknown, _params: { termId: string }) => {},
 
     useHint: assign(({ context: c }) =>
       c.clueShown
@@ -218,13 +227,28 @@ export const roundMachine = setup({
         SKIP: {
           guard: 'canSkip',
           target: 'advancing',
-          actions: [{ type: 'recordTerm', params: { outcome: 'skipped' } }, 'spendSkip'],
+          actions: [
+            {
+              type: 'reportSkip',
+              params: ({ context }) => ({ termId: current(context)?.id ?? '' }),
+            },
+            { type: 'recordTerm', params: { outcome: 'skipped' } },
+            'spendSkip',
+          ],
         },
       },
     },
 
     listening: {
-      entry: [assign({ partial: '', speechError: null, lastResult: null }), 'startListening'],
+      entry: [
+        assign({
+          partial: '',
+          speechError: null,
+          lastResult: null,
+          answerStartedAt: () => Date.now(),
+        }),
+        'startListening',
+      ],
       on: {
         PARTIAL: { actions: assign({ partial: ({ event }) => event.text }) },
         // Ask the recognizer to stop; its FINAL (or an error) moves us on.
@@ -252,7 +276,7 @@ export const roundMachine = setup({
     },
 
     typing: {
-      entry: assign({ speechError: null }),
+      entry: assign({ speechError: null, answerStartedAt: () => Date.now() }),
       on: {
         SUBMIT: {
           guard: { type: 'hasText', params: ({ event }) => event },
@@ -272,6 +296,8 @@ export const roundMachine = setup({
           term: current(c)!,
           alternatives: c.pending?.alternatives ?? [],
           inputMode: c.pending?.inputMode ?? 'voice',
+          hintsUsed: c.hintsOnTerm,
+          ms: c.answerStartedAt === null ? 0 : Date.now() - c.answerStartedAt,
         }),
         onDone: [
           {
@@ -347,7 +373,14 @@ export const roundMachine = setup({
         SKIP: {
           guard: 'canSkip',
           target: 'advancing',
-          actions: [{ type: 'recordTerm', params: { outcome: 'skipped' } }, 'spendSkip'],
+          actions: [
+            {
+              type: 'reportSkip',
+              params: ({ context }) => ({ termId: current(context)?.id ?? '' }),
+            },
+            { type: 'recordTerm', params: { outcome: 'skipped' } },
+            'spendSkip',
+          ],
         },
       },
     },
@@ -359,7 +392,14 @@ export const roundMachine = setup({
         SKIP: {
           guard: 'canSkip',
           target: 'advancing',
-          actions: [{ type: 'recordTerm', params: { outcome: 'skipped' } }, 'spendSkip'],
+          actions: [
+            {
+              type: 'reportSkip',
+              params: ({ context }) => ({ termId: current(context)?.id ?? '' }),
+            },
+            { type: 'recordTerm', params: { outcome: 'skipped' } },
+            'spendSkip',
+          ],
         },
       },
     },

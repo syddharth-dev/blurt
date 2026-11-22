@@ -7,12 +7,13 @@ type Props = {
   topics: readonly LocalTopic[];
   todayId?: string;
   mastered: (topicId: string) => number;
+  lockedAt?: (topicId: string) => number | undefined;
   onOpen: (topicId: string) => void;
   onSeeAll: () => void;
 };
 
 /** "Your topics": a snap-scrolling row; the third card peeks in from the edge (SCREENS.md). */
-export function TopicsRow({ topics, todayId, mastered, onOpen, onSeeAll }: Props) {
+export function TopicsRow({ topics, todayId, mastered, lockedAt, onOpen, onSeeAll }: Props) {
   // Today's topic first, like the canvas.
   const ordered = [...topics].sort((a, b) => Number(b.id === todayId) - Number(a.id === todayId));
   return (
@@ -41,6 +42,7 @@ export function TopicsRow({ topics, todayId, mastered, onOpen, onSeeAll }: Props
             mastered={mastered(t.id)}
             total={t.terms.length}
             today={t.id === todayId}
+            lockedAtLevel={lockedAt?.(t.id)}
             onPress={() => onOpen(t.id)}
           />
         ))}

@@ -1,0 +1,27 @@
+import { QueryClient, useQuery } from '@tanstack/react-query';
+import { useAuth } from '../auth/session';
+import { endpoints } from './endpoints';
+
+export const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+});
+
+export const queryKeys = { me: ['me'] as const, subjects: ['subjects'] as const };
+
+/** The student's profile (XP, level, streak). Undefined until signed in and loaded. */
+export function useMe() {
+  const signedIn = useAuth((s) => s.status === 'signedIn');
+  return useQuery({ queryKey: queryKeys.me, queryFn: endpoints.me, enabled: signedIn });
+}
+
+/** Subjects and topics with lock state and mastered counts. */
+export function useSubjects() {
+  const signedIn = useAuth((s) => s.status === 'signedIn');
+  return useQuery({ queryKey: queryKeys.subjects, queryFn: endpoints.subjects, enabled: signedIn });
+}
+
+/** After a round, totals and mastery changed. */
+export function refreshProgress() {
+  void queryClient.invalidateQueries({ queryKey: queryKeys.me });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.subjects });
+}

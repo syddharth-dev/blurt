@@ -107,7 +107,11 @@ apps/mobile/
                             #   session/ = small Zustand stores shared across screens (finished round → Summary)
                             #   scene/ = SceneBackground (day/night SVG + drifting atoms, sparkles), GlassPanel (blur),
                             #            Sunburst, Float, Confetti, Rise
-                            #   ui/ = PrimaryButton, Chip, TextButton, icons, Placeholder, ErrorBoundary
+                            #   ui/ = PrimaryButton, Chip, TextButton, icons, Placeholder, ErrorBoundary, Wordmark, TabBar, TopicCard
+                            #   auth/ = Supabase client (session saved in encrypted MMKV) + session store
+                            #   api/ = typed API client (validates responses with the shared schemas), TanStack Query hooks
+                            #   storage/ = encrypted MMKV, key kept in SecureStore
+                            #   progress/ = useProgress (XP, level, streak, topic mastery and locks from the API)
     features/
       home/
       play/
@@ -122,6 +126,11 @@ apps/mobile/
 ```
 
 Routes live in `apps/mobile/app/` (Expo Router uses it because there is no `src/app/`). Import app code with the `@/` alias (`@/theme`, `@/shared/...`, `@/features/...`). ESLint blocks imports from one feature into another. Code that several features use, like speech recognition (Play, Practice, onboarding's mic check) and Pip (Home, Play, Summary), lives in `src/shared/`.
+
+### Going online (Phase 3)
+- **Sign-in:** email plus a 6-digit code (Supabase email OTP), in `features/auth/`. The root layout reads the saved session at launch and uses Expo Router's `Stack.Protected` to show either sign-in or the app. A build without `EXPO_PUBLIC_*` settings skips sign-in and plays offline.
+- **Rounds:** `features/play/roundSource.ts` starts the round on the server (`POST /rounds`). The round machine's `evaluateAnswer` actor sends each answer to `/attempts` and uses the **server's** verdict. If the server can't be reached, the round runs on the bundled starter set, or answers are checked on the phone, and an "Offline" note shows (step 4 adds the queue that sends them later). Skips go to `/skip`, and the end of a round goes to `/finish`, whose summary (XP before/after, streak) feeds the Summary screen.
+- **Progress:** Home, Topics and Me read `/me` and `/subjects` through TanStack Query (`useProgress`). Values are 0 until loaded.
 
 ## Shared package
 ```

@@ -46,7 +46,8 @@
           "speechRecognitionPermission": "Blurt! turns what you say into text to check your answer. Your voice stays on your phone when possible.",
           "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "scheme": "blurt",
     "experiments": {

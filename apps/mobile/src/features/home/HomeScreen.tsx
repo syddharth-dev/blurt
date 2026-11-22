@@ -3,31 +3,38 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useProgress } from '@/shared/progress/useProgress';
 import { SceneBackground } from '@/shared/scene';
 import { TAB_BAR_SPACE } from '@/shared/ui/TabBar';
 import { space } from '@/theme';
 import { DailyCard } from './components/DailyCard';
-import { PipGreeting } from './components/PipGreeting';
+import { PipGreeting } from '@/shared/ui/PipGreeting';
 import { TopBar } from './components/TopBar';
 import { TopicsRow } from './components/TopicsRow';
-import { Wordmark } from './components/Wordmark';
+import { Wordmark } from '@/shared/ui/Wordmark';
 import { DAILY_BONUS_XP, dailyTopic, timeLeftLabel } from './daily';
 
 const TOPICS = topicsOf(GRADE8_TERMS);
 
 /**
- * Home (SCREENS.md → 1. Home; design canvas → 1 · Home). Streak, gems and topic progress are
- * zero until progress is saved on the server (ROADMAP Phase 3).
+ * Home (SCREENS.md → 1. Home; design canvas → 1 · Home). Streak and topic progress come from
+ * the API once signed in; gems have no data model yet, so they show 0.
  */
 export function HomeScreen() {
   const now = useMemo(() => new Date(), []);
   const today = dailyTopic(TOPICS, now);
+  const progress = useProgress();
 
   return (
     <SceneBackground variant="day" atoms={2} sparkles={5}>
       <SafeAreaView style={styles.screen} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <TopBar streakDays={0} gems={0} onProfile={() => router.push('/me')} />
+          <TopBar
+            initial={progress.initial}
+            streakDays={progress.streak}
+            gems={0}
+            onProfile={() => router.push('/me')}
+          />
           <Wordmark />
           <PipGreeting title="Hey, I'm Pip." sub="Ready to name some science?" />
           {today ? (
@@ -42,7 +49,8 @@ export function HomeScreen() {
           <TopicsRow
             topics={TOPICS}
             todayId={today?.id}
-            mastered={() => 0}
+            mastered={progress.mastered}
+            lockedAt={progress.lockedAt}
             onOpen={(id) => router.push(`/play/${id}`)}
             onSeeAll={() => router.push('/topics')}
           />

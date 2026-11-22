@@ -1,7 +1,12 @@
-import { GRADE8_TERMS, mixedRound, recognizerHints, topicsOf } from '@blurt/shared/content';
+import { recognizerHints } from '@blurt/shared/content';
+import { matchAnswer, type MatchResult } from '@blurt/shared/matcher';
+import { localDateOf } from '@blurt/shared/progress';
 import { useMachine } from '@xstate/react';
+import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { fromPromise } from 'xstate';
+import { endpoints, isOffline, refreshProgress } from '@/shared/api';
 import {
   KeyboardAvoidingView,
   Linking,
@@ -13,14 +18,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { moodFor } from '@/shared/mascot';
+import { moodFor, Pip } from '@/shared/mascot';
 import { Confetti, Float, Rise, SceneBackground, Sunburst } from '@/shared/scene';
 import { useRoundResults } from '@/shared/session/roundResults';
 import { createSpeechRecognizer, type PermissionState } from '@/shared/speech';
 import { Placeholder } from '@/shared/ui/Placeholder';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { TextButton } from '@/shared/ui/TextButton';
-import { colors, sizes, space, textStyle } from '@/theme';
+import { colors, radius, sizes, space, surfaces, textStyle } from '@/theme';
 import { ControlDock } from './components/ControlDock';
 import { FactCard } from './components/FactCard';
 import { Hud } from './components/Hud';
@@ -30,72 +35,90 @@ import { PictureCard } from './components/PictureCard';
 import { PipBubble } from './components/PipBubble';
 import { TypeAnswer } from './components/TypeAnswer';
 import { bubbleFor, micLabel } from './copy';
-import { ROUND_CONFIG, roundMachine } from './machine/roundMachine';
+import { roundMachine, type EvaluateInput } from './machine/roundMachine';
 import { nextHint, phaseOf, progressLabel, tilesFor } from './machine/roundView';
+import { useRoundLoad, type RoundSetup } from './roundSource';
 
 /** Until the Profile screen adds a speech-language setting (SCREENS.md → still to design). */
 const SPEECH_LANG = 'en-US';
-export const MIX_TOPIC_ID = 'mix';
-export const PRACTICE_TOPIC_ID = 'practice';
+export { MIX_TOPIC_ID, PRACTICE_TOPIC_ID } from './roundSource';
 const SUNBURST = sizes.pictureCard * 1.52;
 
-type RoundSetup = {
-  topicId: string;
-  title: string;
-  subject: string;
-  terms: typeof GRADE8_TERMS;
-  /** Practice rounds replay specific terms */
-  termIds?: string[];
-};
-
-function loadRound(topicId: string, termIds?: string[]): RoundSetup | null {
-  if (topicId === PRACTICE_TOPIC_ID) {
-    const terms = GRADE8_TERMS.filter((t) => termIds?.includes(t.id));
-    if (!terms.length) return null;
-    return { topicId, title: 'Practice', subject: 'Mixed', terms, termIds };
-  }
-  if (topicId === MIX_TOPIC_ID) {
-    return {
-      topicId,
-      title: 'Daily mix',
-      subject: 'Mixed',
-      terms: mixedRound(GRADE8_TERMS, ROUND_CONFIG.termsPerRound),
-    };
-  }
-  const topic = topicsOf(GRADE8_TERMS).find((t) => t.id === topicId);
-  if (!topic) return null;
-  return {
-    topicId,
-    title: topic.title,
-    subject: topic.subject,
-    terms: topic.terms.slice(0, ROUND_CONFIG.termsPerRound),
-  };
-}
-
 export function PlayScreen({ topicId, termIds }: { topicId: string; termIds?: string[] }) {
-  const [round] = useState(() => loadRound(topicId, termIds));
-  if (!round) {
+  const load = useRoundLoad(topicId, termIds);
+  if (load.status === 'loading') {
     return (
-      <Placeholder title="Hmm." body="That topic isn't here. Pick another one from Home.">
+      <Placeholder title="One sec." body="Getting your round ready…">
+        <View style={styles.loadingPip}>
+          <Pip mood="idle" size={sizes.pip.play} />
+        </View>
+      </Placeholder>
+    );
+  }
+  if (load.status === 'error') {
+    return (
+      <Placeholder title="Hmm." body={load.message}>
         <PrimaryButton label="Back home" onPress={() => router.replace('/')} />
       </Placeholder>
     );
   }
-  return <RoundView round={round} />;
+  return <RoundView round={load.round} />;
+}
+
+/** The server's verdict when online; the phone's own check when offline (AGENTS.md rule 3). */
+async function checkAnswer(
+  roundId: string | null,
+  input: EvaluateInput,
+  onOffline: () => void,
+): Promise<MatchResult> {
+  const local = matchAnswer(input.term, input.alternatives, { inputMode: input.inputMode });
+  if (!roundId) return local;
+  try {
+    const res = await endpoints.attempt(roundId, {
+      termId: input.term.id,
+      alternatives: input.alternatives,
+      inputMode: input.inputMode,
+      hintsUsed: input.hintsUsed,
+      ms: Math.round(input.ms),
+      idempotencyKey: randomUUID(),
+    });
+    return {
+      verdict: res.verdict,
+      matched: res.matched,
+      feedback: res.feedback,
+      strategy: res.verdict === local.verdict ? local.strategy : 'none',
+    };
+  } catch (e) {
+    if (isOffline(e)) onOffline();
+    return local;
+  }
 }
 
 function RoundView({ round }: { round: RoundSetup }) {
   const [recognizer] = useState(() => createSpeechRecognizer());
+  const [offline, setOffline] = useState(round.roundId === null);
   const machine = useMemo(() => {
     const hints = recognizerHints(round.terms);
+    const roundId = round.roundId;
     return roundMachine.provide({
       actions: {
         startListening: () => recognizer.start({ lang: SPEECH_LANG, hints }),
         stopListening: () => recognizer.stop(),
         abortListening: () => recognizer.abort(),
+        reportSkip: (_, { termId }) => {
+          if (!roundId) return;
+          endpoints.skip(roundId, { termId, idempotencyKey: randomUUID() }).catch((e: unknown) => {
+            if (isOffline(e)) setOffline(true);
+          });
+        },
+      },
+      actors: {
+        evaluateAnswer: fromPromise<MatchResult, EvaluateInput>(({ input }) =>
+          checkAnswer(roundId, input, () => setOffline(true)),
+        ),
       },
     });
-  }, [recognizer, round.terms]);
+  }, [recognizer, round.terms, round.roundId]);
   const [snapshot, send] = useMachine(machine, { input: { terms: round.terms } });
   const setLast = useRoundResults((s) => s.setLast);
 
@@ -130,20 +153,48 @@ function RoundView({ round }: { round: RoundSetup }) {
     if (snapshot.status !== 'done' || !snapshot.output || handedOff.current) return;
     handedOff.current = true;
     const out = snapshot.output;
+    const serverRound = round.roundId;
+    const finishOnServer = serverRound
+      ? endpoints.finish(serverRound, localDateOf(new Date())).then(
+          (s) => {
+            refreshProgress();
+            return s;
+          },
+          () => null,
+        )
+      : Promise.resolve(null);
     if (out.endedBy === 'quit') {
+      // Still saved, so answers given before quitting count towards XP and the streak.
+      void finishOnServer;
       router.back();
       return;
     }
-    const roundId = Date.now().toString(36);
-    setLast({
-      roundId,
-      topicId: round.topicId,
-      termIds: round.termIds,
-      topicTitle: round.title,
-      subject: round.subject,
-      ...out,
+    void finishOnServer.then((server) => {
+      const id = serverRound ?? Date.now().toString(36);
+      const base = {
+        roundId: id,
+        topicId: round.topicId,
+        termIds: round.termIds,
+        topicTitle: round.title,
+        subject: round.subject,
+      };
+      if (server) {
+        setLast(
+          {
+            ...base,
+            score: server.score,
+            bestStreak: server.bestStreak,
+            livesLeft: server.livesLeft,
+            endedBy: server.endedBy,
+            results: server.results,
+          },
+          { before: server.xpBefore, after: server.xpAfter },
+        );
+      } else {
+        setLast({ ...base, ...out });
+      }
+      router.replace(`/summary/${id}`);
     });
-    router.replace(`/summary/${roundId}`);
   }, [snapshot.status, snapshot.output, round, setLast]);
 
   async function onMic() {
@@ -192,6 +243,11 @@ function RoundView({ round }: { round: RoundSetup }) {
               lives={c.lives}
               onQuit={() => send({ type: 'QUIT' })}
             />
+            {offline ? (
+              <Text style={styles.offline}>
+                Offline: answers are checked on your phone and this round won&apos;t be saved.
+              </Text>
+            ) : null}
 
             <View style={styles.stage}>
               <View style={styles.sunburst}>
@@ -297,6 +353,17 @@ function RoundView({ round }: { round: RoundSetup }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  loadingPip: { alignItems: 'center' },
+  offline: {
+    ...textStyle('chip'),
+    color: colors.white,
+    backgroundColor: surfaces.scrim,
+    borderRadius: radius.chip,
+    paddingHorizontal: space.s12,
+    paddingVertical: space.s6,
+    textAlign: 'center',
+    overflow: 'hidden',
+  },
   stage: { alignItems: 'center', justifyContent: 'center' },
   sunburst: { position: 'absolute' },
   flex: { flex: 1 },

@@ -2,6 +2,7 @@ import { GRADE8_TERMS, topicsOf } from '@blurt/shared/content';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useProgress } from '@/shared/progress/useProgress';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { SceneBackground } from '@/shared/scene';
 import { TAB_BAR_SPACE } from '@/shared/ui/TabBar';
@@ -15,6 +16,7 @@ const TOPICS = topicsOf(GRADE8_TERMS);
  * dates first) are still to design (SCREENS.md → 4).
  */
 export function TopicsScreen() {
+  const progress = useProgress();
   return (
     <SceneBackground variant="day" atoms={0} sparkles={3}>
       <SafeAreaView style={styles.screen} edges={['top']}>
@@ -29,7 +31,8 @@ export function TopicsScreen() {
                 key={t.id}
                 title={t.title}
                 subject={t.subject}
-                mastered={0}
+                mastered={progress.mastered(t.id)}
+                lockedAtLevel={progress.lockedAt(t.id)}
                 total={t.terms.length}
                 onPress={() => router.push(`/play/${t.id}`)}
               />

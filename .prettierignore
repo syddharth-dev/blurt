@@ -13,3 +13,5 @@ apps/api/src/generated
 apps/dashboard/src/styles/tokens.css
 .turbo
 apps/mobile/src/shared/scene/scenes.generated.ts
+# Email templates are pasted into Supabase as authored
+supabase/templates
