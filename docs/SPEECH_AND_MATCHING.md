@@ -13,14 +13,23 @@ This is the heart of the app. Science vocabulary is hard for generic speech-to-t
 
 Wrap it all behind a port so the engine can change:
 ```ts
+// apps/mobile/src/shared/speech/types.ts
 export interface SpeechRecognizer {
-  start(opts: { lang: string; hints: string[] }): void;
-  stop(): void;
+  isAvailable(): boolean;
+  getPermission(): Promise<PermissionState>;      // 'granted' | 'denied' | 'undetermined'
+  requestPermission(): Promise<PermissionState>;
+  start(opts: { lang: string; hints: string[]; onDevice?: boolean; androidModel?: 'free_form' | 'web_search' }): void;
+  stop(): void;    // emits the final result if there is one
+  abort(): void;   // discards it
   onPartial(cb: (text: string) => void): Unsubscribe;
   onFinal(cb: (alternatives: string[]) => void): Unsubscribe;
   onError(cb: (e: SpeechError) => void): Unsubscribe;
+  onEnd(cb: () => void): Unsubscribe;   // always last, also after errors
 }
 ```
+Adapters: `createNativeSpeechAdapter()` (expo-speech-recognition) and `createMockSpeechAdapter(script)`. `createSpeechRecognizer()` picks the mock when `EXPO_PUBLIC_SPEECH=mock`. A `nomatch` from the phone, or a session that ends with no result, counts as `no-speech`.
+
+Defaults chosen in the Phase 1 spike (tune them in the Speech lab): `maxAlternatives: 5`, on-device when supported, iOS `iosTaskHint: 'confirmation'` and Android `EXTRA_LANGUAGE_MODEL: 'web_search'` (both help single-word answers).
 
 ## 2. Answer matching (shared package, run on the server)
 Input: a list of alternatives (or typed text). Output: `correct | close | wrong`, plus feedback.
@@ -39,6 +48,10 @@ for each alternative (in recognizer order):
 return the best verdict across all alternatives (CORRECT > CLOSE > WRONG)
 ```
 
+Implementation: `packages/shared/src/matcher` → `matchAnswer(term, alternatives, { inputMode })` returns `{ verdict, matched, strategy, feedback }`. `feedback` is ready-to-show copy: a CLOSE variant's reason becomes "Close — that's the adjective.", NEAR gives "Almost — check the ending.", and a confusable gives its own feedback. Comparisons use a key with spaces removed, so "cell membrane" = "cellmembrane".
+
+How the safety check works: the fuzzy steps (4 and 5) compare the input with every form of the term (canonical + ACCEPT), every CLOSE variant and every confusable. If a confusable is **at least as near** as the term (ties included), the answer is wrong. If a CLOSE variant is nearer than the term, it's CLOSE with that variant's reason ("nucleer" → "that's the adjective"). Only then can steps 4 and 5 reward the term. NEAR threshold: 0.6 by voice, 0.7 typed.
+
 Rules:
 - **The confusable guard always runs first.** "neutron" must never be accepted for "proton", however similar they sound.
 - Typed answers use the same matcher with a slightly stricter NEAR threshold (spelling is part of learning).
@@ -53,6 +66,8 @@ Rules:
 - `nuclei` → CORRECT for `nucleus`
 - `um the nucleus` → CORRECT
 - Alternatives `["new clears", "nucleus"]` → CORRECT (second alternative wins)
+
+- Every term set also gets a whole-set test: no term's answer (or ACCEPT variant) may be accepted for any other term in the set (`packages/shared/src/content/grade8.test.ts`).
 
 ## 3. Pronunciation help
 - Pre-generate one clip per term with a cloud text-to-speech service at content-creation time, store it on the CDN, and play it with `expo-audio` from the "nu·cle·us" button.

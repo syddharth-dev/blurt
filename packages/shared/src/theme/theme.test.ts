@@ -11,6 +11,10 @@ const TEXT_PAIRS: Array<[fg: keyof typeof colors, bg: keyof typeof colors]> = [
   ['white', 'violet'],
   ['white', 'night'],
   ['sunny', 'night'],
+  ['violet', 'lilac'], // close verdict badge
+  ['night', 'coral'], // wrong verdict badge
+  ['coralShadow', 'white'], // subject tag on cards
+  ['lilac', 'night'],
 ];
 
 describe('brand colour contrast', () => {

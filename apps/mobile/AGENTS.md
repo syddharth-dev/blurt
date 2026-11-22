@@ -30,6 +30,7 @@ Run lint and typecheck before declaring any task done.
 
 - Use **Expo Router** for all navigation. Routes live in `app/` (not `src/app/`, per docs/ARCHITECTURE.md) — every file there is a screen, `_layout.tsx` files define navigators. Routes stay thin and compose screens from `src/features/<feature>/`. Keep non-route code outside `app/`.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
+- Tab navigators only show screens declared in their layout (`<Tabs.Screen name="…" />`). A new tab route that isn't declared renders nothing.
 - Docs: https://docs.expo.dev/router/introduction.md
 
 ## Building with EAS

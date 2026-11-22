@@ -20,6 +20,11 @@ export function HomeScreen() {
         accessibilityHint="Opens a practice round"
         onPress={() => router.push('/play/demo')}
       />
+      <PrimaryButton
+        label="Speech lab"
+        accessibilityHint="Test the mic with Grade 8 terms"
+        onPress={() => router.push('/speech-lab')}
+      />
     </Placeholder>
   );
 }

@@ -7,7 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "app.blurt.mobile",
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "Blurt! turns what you say into text to check your answer. Your voice stays on your phone when possible.",
+        "NSMicrophoneUsageDescription": "Blurt! listens when you tap the mic so you can say the science term out loud."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -16,7 +21,9 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "app.blurt.mobile",
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -44,6 +51,17 @@
     "scheme": "blurt",
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a648a958-94eb-4289-95f7-72350690cc79"
+      }
+    },
+    "owner": "syddharth-dev"
   }
 }

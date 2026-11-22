@@ -89,21 +89,22 @@ apps/mobile/
     summary/[roundId].tsx
   src/
     theme/                  # tokens.ts, typography.ts, motion.ts: re-export packages/shared/src/theme + RN helpers
-    shared/                 # ui kit (Button3D, GlassPanel, Chip, Tile), hooks, api client
+    shared/                 # ui kit (Button3D, GlassPanel, Chip, Tile), hooks, api client,
+                            #   speech/ = SpeechRecognizer port + native and mock adapters
     features/
       home/
       play/
         machine/roundMachine.ts
         components/ (PictureCard, LetterTiles, MicButton, PipBubble, FactCard)
         PlayScreen.tsx
-      speech/               # SpeechRecognizer port + adapters
+      speech-lab/           # Speech lab screen (Phase 1 spike, developer tool)
       mascot/               # Pip.tsx, pipMoods.ts, moodFor.ts (react-native-svg + Reanimated)
       summary/
       topics/
       profile/
 ```
 
-Routes live in `apps/mobile/app/` (Expo Router uses it because there is no `src/app/`). Import app code with the `@/` alias (`@/theme`, `@/shared/...`, `@/features/...`). ESLint blocks imports from one feature into another.
+Routes live in `apps/mobile/app/` (Expo Router uses it because there is no `src/app/`). Import app code with the `@/` alias (`@/theme`, `@/shared/...`, `@/features/...`). ESLint blocks imports from one feature into another. Code that several features use, like speech recognition (Play, Practice, onboarding's mic check), lives in `src/shared/`.
 
 ## Shared package
 ```
@@ -111,6 +112,7 @@ packages/shared/src/
   theme/      # brand tokens (the code copy of BRAND.md) + contrast helper
   schemas/    # Zod request/response shapes (DATA_AND_API.md)
   matcher/    # AnswerMatcher (SPEECH_AND_MATCHING.md)
+  content/    # bundled term sets (Phase 1–2 local content; later the seed data)
 ```
 Built with `tsc` to `dist/`, and imported as `@blurt/shared`, `@blurt/shared/theme`, `@blurt/shared/schemas` or `@blurt/shared/matcher`. Turbo builds it before anything that depends on it typechecks, lints, tests or runs.
 
