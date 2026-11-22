@@ -104,11 +104,14 @@ apps/mobile/
     shared/                 # ui kit (Button3D, GlassPanel, Chip, Tile), hooks, api client,
                             #   speech/ = SpeechRecognizer port + native and mock adapters
                             #   mascot/ = Pip.tsx, pipMoods.ts, moodFor.ts (used by Home, Play, Summary)
+                            #   session/ = small Zustand stores shared across screens (finished round → Summary)
+                            #   ui/ = PrimaryButton, Chip, TextButton, icons, Placeholder, ErrorBoundary
     features/
       home/
       play/
         machine/roundMachine.ts
-        components/ (PictureCard, LetterTiles, MicButton, PipBubble, FactCard)
+        components/ (Hud, PictureCard, LetterTiles, PipBubble, ControlDock, MicButton, TypeAnswer, FactCard, MicPrimer)
+        copy.ts             # Pip's bubble copy and mic labels, derived from the round state
         PlayScreen.tsx
       speech-lab/           # Speech lab screen (Phase 1 spike, developer tool)
       summary/

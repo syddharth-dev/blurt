@@ -14,8 +14,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path, Rect } from 'react-native-svg';
 import { Chip } from '@/shared/ui/Chip';
+import { MicIcon } from '@/shared/ui/icons';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { TextButton } from '@/shared/ui/TextButton';
 import { colors, radius, sizes, space, surfaces, textStyle } from '@/theme';
@@ -281,20 +281,6 @@ function VerdictBadge({ verdict }: { verdict: MatchResult['verdict'] }) {
         {look.icon} {look.text.toUpperCase()}
       </Text>
     </View>
-  );
-}
-
-function MicIcon({ color }: { color: string }) {
-  return (
-    <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
-      <Rect x={9} y={3} width={6} height={11} rx={3} fill={color} />
-      <Path
-        d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"
-        stroke={color}
-        strokeWidth={2}
-        strokeLinecap="round"
-      />
-    </Svg>
   );
 }
 

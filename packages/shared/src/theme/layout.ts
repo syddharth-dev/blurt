@@ -37,12 +37,20 @@ export const sizes = {
   topicCardWidth: 136,
   topicCardPanel: 76,
   pictureCard: 250,
+  /** Count badge on the dock's side buttons */
+  badge: 22,
+  progressHeight: 6,
+  icon: 24,
+  iconSmall: 18,
+  tileGap: 6,
   pip: { home: 120, play: 104, summary: 112, icon: 124 },
 } as const;
 
 export const elevation = {
   /** 3D button: box-shadow 0 6px 0 <shadowToken>; pressed moves down 4 and shadow shrinks to 2. */
   button3d: { offsetY: 6, pressedOffsetY: 2, pressTravel: 4 },
+  /** Letter tile bottom edge */
+  tile: { offsetY: 4 },
   /** Card shadow: 0 10–18px 24–40px rgba(22,12,58,0.3). */
   card: { offsetY: 14, blur: 32, opacity: 0.3 },
 } as const;

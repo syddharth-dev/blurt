@@ -104,18 +104,25 @@ export function xpFor(hints: number, misses: number): number {
   return Math.max(min, base - penalty * (hints + misses));
 }
 
-const freshTerm = {
-  clueShown: false,
-  revealedLetters: 1,
-  hintsOnTerm: 0,
-  missesOnTerm: 0,
-  heardOnTerm: [] as string[],
-  partial: '',
-  pending: null,
-  lastResult: null,
-  lastXp: 0,
-  speechError: null,
-} satisfies Partial<RoundContext>;
+/** Terms without a picture show their clue on the card from the start. */
+export function startsWithClue(term: ContentTerm | undefined): boolean {
+  return !term?.picture;
+}
+
+function freshTerm(term: ContentTerm | undefined) {
+  return {
+    clueShown: startsWithClue(term),
+    revealedLetters: 1,
+    hintsOnTerm: 0,
+    missesOnTerm: 0,
+    heardOnTerm: [] as string[],
+    partial: '',
+    pending: null,
+    lastResult: null,
+    lastXp: 0,
+    speechError: null,
+  } satisfies Partial<RoundContext>;
+}
 
 const current = (c: RoundContext) => c.terms[c.index];
 
@@ -166,7 +173,10 @@ export const roundMachine = setup({
         };
       },
     ),
-    nextTerm: assign(({ context: c }) => ({ ...freshTerm, index: c.index + 1 })),
+    nextTerm: assign(({ context: c }) => ({
+      ...freshTerm(c.terms[c.index + 1]),
+      index: c.index + 1,
+    })),
     spendSkip: assign(({ context: c }) => ({ skipsLeft: c.skipsLeft - 1 })),
   },
   guards: {
@@ -198,7 +208,7 @@ export const roundMachine = setup({
       bestStreak: 0,
       results: [],
       endedBy: null,
-      ...freshTerm,
+      ...freshTerm(input.terms[0]),
     };
   },
   initial: 'idle',

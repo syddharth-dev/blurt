@@ -15,6 +15,15 @@ const byCanonical = (c: string) => GRADE8_TERMS.find((t) => t.canonical === c)!;
 const nucleus = byCanonical('nucleus');
 const proton = byCanonical('proton');
 const kinetic = byCanonical('kinetic energy');
+/** Terms with a picture start without the clue, so the first hint shows it. */
+const withPicture = <T extends object>(t: T) => ({
+  ...t,
+  picture: {
+    diagram: 'test',
+    highlight: { shape: 'ellipse' as const, x: 0.4, y: 0.4, w: 0.2, h: 0.2 },
+    altText: 'test',
+  },
+});
 
 function start(
   input: Partial<RoundInput> = {},
@@ -43,6 +52,21 @@ async function type(a: Actor, text: string) {
 }
 
 describe('roundMachine', () => {
+  it('a term without a picture starts with its clue shown, so the first hint is a letter', () => {
+    const a = start();
+    expect(ctx(a).clueShown).toBe(true);
+    expect(nextHint(ctx(a))).toBe('letter');
+    a.send({ type: 'HINT' });
+    expect(ctx(a)).toMatchObject({ revealedLetters: 2, hintsLeft: 2 });
+  });
+
+  it('the clue state resets per term, based on whether it has a picture', async () => {
+    const a = start({ terms: [nucleus, withPicture(proton)] });
+    await say(a, 'nucleus');
+    a.send({ type: 'NEXT' });
+    expect(ctx(a).clueShown).toBe(false);
+  });
+
   it('starts idle on the first term with 3 lives, hints and 2 skips', () => {
     const a = start();
     expect(phase(a)).toBe('idle');
@@ -179,7 +203,7 @@ describe('roundMachine', () => {
 
   describe('hints', () => {
     it('first press shows the clue, later presses reveal letters, each costs one', () => {
-      const a = start();
+      const a = start({ terms: [withPicture(nucleus)] });
       expect(nextHint(ctx(a))).toBe('clue');
       a.send({ type: 'HINT' });
       expect(ctx(a)).toMatchObject({ clueShown: true, revealedLetters: 1, hintsLeft: 2 });

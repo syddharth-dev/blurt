@@ -3,6 +3,8 @@ import type { ContentTerm } from '@blurt/shared/content';
 import type { InputMode } from '@blurt/shared/schemas';
 import type { SpeechError, StartOptions } from '@/shared/speech';
 
+export { errorCopy } from '@/shared/speech';
+
 /**
  * State for the Speech lab (ROADMAP Phase 1 spike). Matching here is a local preview;
  * from Phase 3 the server's verdict is authoritative (AGENTS.md rule 3).
@@ -138,29 +140,6 @@ export function labReducer(
         return { ...state, settings: { ...state.settings, ...action.patch } };
     }
   };
-}
-
-/** Pip-voice copy for recognizer errors (docs/BRAND.md voice). */
-export function errorCopy(code: SpeechError['code']): string {
-  switch (code) {
-    case 'no-speech':
-      return "Didn't catch that. Tap the mic and say it again.";
-    case 'network':
-      return 'Speech needs a connection right now. Try on-device, or type it instead.';
-    case 'not-allowed':
-      return 'The mic is off for Blurt!. Turn it on in Settings, or type it instead.';
-    case 'audio-capture':
-      return 'The mic got interrupted. Tap to try again.';
-    case 'language-not-supported':
-      return "This phone can't do that language on-device yet. Try turning on-device off.";
-    case 'busy':
-      return 'The recognizer is busy. Give it a second and try again.';
-    case 'unavailable':
-      return "Speech recognition isn't available on this phone. Type it instead.";
-    case 'aborted':
-    case 'unknown':
-      return 'The mic hiccuped. Try again, or type it instead.';
-  }
 }
 
 /** Headline for a verdict, in Pip's voice. Never "Wrong". */

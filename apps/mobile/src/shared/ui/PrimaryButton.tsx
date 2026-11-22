@@ -1,25 +1,63 @@
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { colors, elevation, radius, sizes, space, textStyle } from '@/theme';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { colors, elevation, motion, radius, sizes, space, textStyle } from '@/theme';
 
-type Props = { label: string; onPress: () => void; accessibilityHint?: string };
+type Props = {
+  label: string;
+  onPress: () => void;
+  accessibilityHint?: string;
+  /** Breathe (scale 1 → 1.04) when this is the main next step (BRAND.md). */
+  breathe?: boolean;
+};
 
-/** Sunny 3D button (docs/BRAND.md → "Primary button"). Breathing motion comes in Phase 2. */
-export function PrimaryButton({ label, onPress, accessibilityHint }: Props) {
+/** Sunny 3D button (docs/BRAND.md → "Primary button"). */
+export function PrimaryButton({ label, onPress, accessibilityHint, breathe = false }: Props) {
+  const reduced = useReducedMotion();
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    if (!breathe || reduced) {
+      cancelAnimation(scale);
+      scale.value = 1;
+      return;
+    }
+    const half = motion.breathe.duration / 2;
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(motion.breathe.scaleTo, { duration: half }),
+        withTiming(1, { duration: half }),
+      ),
+      -1,
+    );
+    return () => cancelAnimation(scale);
+  }, [breathe, reduced, scale]);
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityHint={accessibilityHint}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        pressed && {
-          transform: [{ translateY: elevation.button3d.pressTravel }],
-          boxShadow: `0 ${elevation.button3d.pressedOffsetY}px 0 ${colors.sunnyShadow}`,
-        },
-      ]}
-    >
-      <Text style={styles.label}>{label}</Text>
-    </Pressable>
+    <Animated.View style={style}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint={accessibilityHint}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.button,
+          pressed && {
+            transform: [{ translateY: elevation.button3d.pressTravel }],
+            boxShadow: `0 ${elevation.button3d.pressedOffsetY}px 0 ${colors.sunnyShadow}`,
+          },
+        ]}
+      >
+        <Text style={styles.label}>{label}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
