@@ -39,6 +39,9 @@ The code copy of every token in this file is `packages/shared/src/theme` (`color
 | `glass` | `rgba(255,255,255,0.12–0.16)` + 14–18 px blur | Controls on scenes |
 | `scrim` | `rgba(22,12,58,0.35–0.6)` + blur | Chips and fact card on scenes |
 
+### Subject colours
+Topic-card panels (`subjectColors` in code; `Subject.color` in the database holds the token name): Chemistry `sunny`, Biology `coral`, Physics `mint` (from the design canvas), and Earth & Space `violet` with a white icon (my choice; it's not on the canvas). Icons on the other panels are `night`.
+
 ### Pip colours
 Used only by the mascot (`pipColors` in code, anatomy in `MASCOT.md`).
 

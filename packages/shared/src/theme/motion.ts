@@ -17,6 +17,10 @@ export const motion = {
   /** Confetti falls with a little sideways sway and spin. */
   confetti: { pieces: 22, minDuration: 2_200, maxDuration: 3_400, sway: 24, spins: 2 },
   breathe: { duration: 1_800, scaleTo: 1.04 },
+  /** The wordmark's "!" wiggles (degrees, lift in px). */
+  wiggle: { duration: 1_600, from: 8, to: -6, lift: -3 },
+  /** Daily card's fanned mini cards sway a little. */
+  fan: { duration: 3_000, sway: 4 },
   /** Current progress segment pulsing white. */
   pulse: { duration: 1_200, minOpacity: 0.35 },
   /** Mic waveform bars while listening. */

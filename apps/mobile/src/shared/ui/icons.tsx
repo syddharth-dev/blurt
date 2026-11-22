@@ -1,5 +1,5 @@
 import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
-import { sizes } from '@/theme';
+import { colors, sizes } from '@/theme';
 
 /** Simple line icons on a 24×24 grid. Decorative: label the button, not the icon. */
 type IconProps = { color: string; size?: number };
@@ -110,6 +110,151 @@ export function KeyboardIcon({ color, size = sizes.iconSmall }: IconProps) {
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function FlameIcon({ size = sizes.iconSmall }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9z"
+        fill={colors.coral}
+      />
+      <Path
+        d="M12 12c1 2 3 3 3 5a3 3 0 0 1-6 0c0-1 1-2 1.5-2.5.5 1 1 1.5 1.5 1.5 0-1.5-.5-2.5 0-4z"
+        fill={colors.sunny}
+      />
+    </Svg>
+  );
+}
+
+export function GemIcon({ size = sizes.iconSmall }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M6 3h12l4 6-10 12L2 9z" fill={colors.mint} />
+      <Path
+        d="M2 9h20M12 21L8 9l4-6 4 6z"
+        fill="none"
+        stroke={colors.night}
+        strokeOpacity={0.35}
+        strokeWidth={1.4}
+      />
+    </Svg>
+  );
+}
+
+export function ClockIcon({ color, size = 12 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={13} r={8} stroke={color} strokeWidth={3} />
+      <Path d="M12 9v4l2 2M9 2h6" stroke={color} strokeWidth={3} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function PersonIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={8} r={4} stroke={color} strokeWidth={2} />
+      <Path d="M4 21a8 8 0 0 1 16 0" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+export function PlayIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M7 4l13 8-13 8z" fill={color} />
+    </Svg>
+  );
+}
+
+export function DecksIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x={3} y={5} width={13} height={16} rx={3} stroke={color} strokeWidth={2} />
+      <Path d="M8 3h10a3 3 0 0 1 3 3v12" stroke={color} strokeWidth={2} strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
+export function TrophyIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function LockIcon({ color, size = 40 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x={5} y={11} width={14} height={10} rx={2} stroke={color} strokeWidth={2} />
+      <Path d="M8 11V7a4 4 0 0 1 8 0v4" stroke={color} strokeWidth={2} strokeLinecap="round" />
+    </Svg>
+  );
+}
+
+/** Subject icons for topic cards and the daily card's fanned mini cards. */
+export function CellIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Ellipse cx={12} cy={12} rx={10} ry={8} stroke={color} strokeWidth={2} />
+      <Circle cx={13} cy={11} r={3} fill={color} />
+      <Ellipse cx={7} cy={14} rx={2} ry={1.2} fill={color} />
+      <Circle cx={17} cy={15} r={1} fill={color} />
+    </Svg>
+  );
+}
+
+export function FlaskIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 15h9"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function ForcesIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x={8} y={9} width={8} height={6} rx={1.5} stroke={color} strokeWidth={2.2} />
+      <Path
+        d="M2 12h5M5 10l2 2-2 2M17 12h5M20 10l2 2-2 2"
+        stroke={color}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function PlanetIcon({ color, size = sizes.icon }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={6} stroke={color} strokeWidth={2} />
+      <Ellipse
+        cx={12}
+        cy={12}
+        rx={11}
+        ry={3.5}
+        stroke={color}
+        strokeWidth={2}
+        transform="rotate(-20 12 12)"
       />
     </Svg>
   );

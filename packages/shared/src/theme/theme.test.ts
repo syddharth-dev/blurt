@@ -20,6 +20,7 @@ const TEXT_PAIRS: Array<[fg: keyof typeof colors, bg: keyof typeof colors]> = [
   ['coralInk', 'coralTint'], // "Daily" tag
   ['lockedInk', 'lockedPanel'], // locked topic text
   ['lockedInk', 'white'],
+  ['night', 'mint'], // Physics panel icon
 ];
 
 describe('brand colour contrast', () => {

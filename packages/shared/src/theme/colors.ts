@@ -30,6 +30,18 @@ export const colors = {
 
 export type ColorToken = keyof typeof colors;
 
+/**
+ * Topic-card panel colour per subject (BRAND.md → Subject colours). Chemistry, Biology and
+ * Physics follow the design canvas; Earth & Space is not on the canvas (violet chosen).
+ * `ink` is the icon colour on that panel.
+ */
+export const subjectColors = {
+  Chemistry: { panel: 'sunny', ink: 'night' },
+  Biology: { panel: 'coral', ink: 'night' },
+  Physics: { panel: 'mint', ink: 'night' },
+  'Earth & Space': { panel: 'violet', ink: 'white' },
+} as const satisfies Record<string, { panel: ColorToken; ink: ColorToken }>;
+
 /** Translucent surfaces. BRAND.md gives ranges; these are the defaults inside them. */
 export const surfaces = {
   /** Controls on scenes. rgba(255,255,255,0.12–0.16) + 14–18 px blur. */

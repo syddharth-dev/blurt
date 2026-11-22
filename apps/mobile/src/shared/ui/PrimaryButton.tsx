@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -17,10 +17,12 @@ type Props = {
   accessibilityHint?: string;
   /** Breathe (scale 1 → 1.04) when this is the main next step (BRAND.md). */
   breathe?: boolean;
+  /** Optional icon before the label (e.g. the mic on "Let's blurt"). */
+  icon?: ReactNode;
 };
 
 /** Sunny 3D button (docs/BRAND.md → "Primary button"). */
-export function PrimaryButton({ label, onPress, accessibilityHint, breathe = false }: Props) {
+export function PrimaryButton({ label, onPress, accessibilityHint, breathe = false, icon }: Props) {
   const reduced = useReducedMotion();
   const scale = useSharedValue(1);
   useEffect(() => {
@@ -55,6 +57,7 @@ export function PrimaryButton({ label, onPress, accessibilityHint, breathe = fal
           },
         ]}
       >
+        {icon}
         <Text style={styles.label}>{label}</Text>
       </Pressable>
     </Animated.View>
@@ -68,6 +71,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.button,
     backgroundColor: colors.sunny,
     boxShadow: `0 ${elevation.button3d.offsetY}px 0 ${colors.sunnyShadow}`,
+    flexDirection: 'row',
+    gap: space.s10,
     alignItems: 'center',
     justifyContent: 'center',
   },

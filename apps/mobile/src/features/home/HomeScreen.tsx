@@ -1,60 +1,63 @@
 import { GRADE8_TERMS, topicsOf } from '@blurt/shared/content';
 import { router } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { Pip } from '@/shared/mascot';
-import { Chip } from '@/shared/ui/Chip';
-import { Placeholder } from '@/shared/ui/Placeholder';
-import { PrimaryButton } from '@/shared/ui/PrimaryButton';
-import { TextButton } from '@/shared/ui/TextButton';
-import { colors, sizes, space, textStyle } from '@/theme';
+import { useMemo } from 'react';
+import { ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { SceneBackground } from '@/shared/scene';
+import { TAB_BAR_SPACE } from '@/shared/ui/TabBar';
+import { space } from '@/theme';
+import { DailyCard } from './components/DailyCard';
+import { PipGreeting } from './components/PipGreeting';
+import { TopBar } from './components/TopBar';
+import { TopicsRow } from './components/TopicsRow';
+import { Wordmark } from './components/Wordmark';
+import { DAILY_BONUS_XP, dailyTopic, timeLeftLabel } from './daily';
 
 const TOPICS = topicsOf(GRADE8_TERMS);
 
-/** Placeholder. The real Home is specified in docs/SCREENS.md → "1. Home" (Phase 5). */
+/**
+ * Home (SCREENS.md → 1. Home; design canvas → 1 · Home). Streak, gems and topic progress are
+ * zero until progress is saved on the server (ROADMAP Phase 3).
+ */
 export function HomeScreen() {
+  const now = useMemo(() => new Date(), []);
+  const today = dailyTopic(TOPICS, now);
+
   return (
-    <Placeholder
-      title={
-        <>
-          blurt<Text style={{ color: colors.sunny }}>!</Text>
-        </>
-      }
-      body="See it. Say it. Know it."
-      scene="day"
-    >
-      {/* On Home, Pip waves (MASCOT.md mood mapping). */}
-      <View style={styles.pip}>
-        <Pip mood="wave" size={sizes.pip.home} />
-      </View>
-      <PrimaryButton
-        breathe
-        label="Let's blurt"
-        accessibilityHint="Starts a mixed round of 10 terms"
-        onPress={() => router.push('/play/mix')}
-      />
-      <Text style={styles.label}>TOPICS</Text>
-      <View style={styles.wrap}>
-        {TOPICS.map((t) => (
-          <Chip
-            key={t.id}
-            label={`${t.title} · ${t.terms.length}`}
-            selected={false}
-            onPress={() => router.push(`/play/${t.id}`)}
+    <SceneBackground variant="day" atoms={2} sparkles={5}>
+      <SafeAreaView style={styles.screen} edges={['top']}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <TopBar streakDays={0} gems={0} onProfile={() => router.push('/me')} />
+          <Wordmark />
+          <PipGreeting title="Hey, I'm Pip." sub="Ready to name some science?" />
+          {today ? (
+            <DailyCard
+              title={today.title}
+              terms={today.terms.length}
+              timeLeft={timeLeftLabel(now)}
+              bonusXp={DAILY_BONUS_XP}
+              onPlay={() => router.push(`/play/${today.id}`)}
+            />
+          ) : null}
+          <TopicsRow
+            topics={TOPICS}
+            todayId={today?.id}
+            mastered={() => 0}
+            onOpen={(id) => router.push(`/play/${id}`)}
+            onSeeAll={() => router.push('/topics')}
           />
-        ))}
-      </View>
-      <Text style={styles.label}>DEVELOPER</Text>
-      <View style={styles.row}>
-        <TextButton label="Speech lab" onPress={() => router.push('/speech-lab')} />
-        <TextButton label="Pip preview" onPress={() => router.push('/pip-preview')} />
-      </View>
-    </Placeholder>
+        </ScrollView>
+      </SafeAreaView>
+    </SceneBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  pip: { alignItems: 'center' },
-  label: { ...textStyle('label'), color: colors.lilac, marginTop: space.s8 },
-  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s8 },
-  row: { flexDirection: 'row', gap: space.s20 },
+  screen: { flex: 1 },
+  content: {
+    paddingHorizontal: space.screen,
+    paddingTop: space.s8,
+    paddingBottom: TAB_BAR_SPACE,
+    gap: space.s12,
+  },
 });
