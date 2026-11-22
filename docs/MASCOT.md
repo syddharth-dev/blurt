@@ -71,6 +71,8 @@ Home 120 · Play 104 · Summary 112 · App icon: 124 on a `#160C3A` rounded squa
 
 ## Implementation with Reanimated
 
+**Built:** `apps/mobile/src/shared/mascot/` (`Pip.tsx`, `pipMoods.ts`, `moodFor.ts`). The code below is the reference it was built from. The built version differs in small ways: colours come from `pipColors`; shared timings (blink, wave, pulse, ear spring) live in `PIP_TIMING` in `pipMoods.ts`; and `Ear`, `Arm` and `Layer` are top-level components, not redefined on each render. To compare moods on a phone, open **Pip preview** from Home → Developer. It has buttons for every mood, Pip's real sizes, a night/light background switch, and a "Switch moods fast" stress test.
+
 ### Install
 ```bash
 npx expo install react-native-svg react-native-reanimated

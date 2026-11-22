@@ -26,6 +26,8 @@ npx expo install --fix      # fix incompatible package versions
 
 Run lint and typecheck before declaring any task done.
 
+Tests: Jest (`jest-expo`) + React Native Testing Library. Reanimated is replaced in Jest by `src/test/reanimatedMock.ts` (Reanimated 4's own mock needs native modules), so tests render final poses. Add any Reanimated function a component starts using to that file. Check motion itself on a device.
+
 ## Navigation & Routing
 
 - Use **Expo Router** for all navigation. Routes live in `app/` (not `src/app/`, per docs/ARCHITECTURE.md) — every file there is a screen, `_layout.tsx` files define navigators. Routes stay thin and compose screens from `src/features/<feature>/`. Keep non-route code outside `app/`.

@@ -15,7 +15,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path, Rect } from 'react-native-svg';
+import { Chip } from '@/shared/ui/Chip';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
+import { TextButton } from '@/shared/ui/TextButton';
 import { colors, radius, sizes, space, surfaces, textStyle } from '@/theme';
 import { createSpeechRecognizer, type PermissionState } from '@/shared/speech';
 import {
@@ -152,13 +154,21 @@ export function SpeechLabScreen() {
             </Text>
           ) : null}
           <View style={styles.row}>
-            <TextButton dark label="Previous" onPress={() => dispatch({ type: 'GO', delta: -1 })} />
             <TextButton
-              dark
+              tone="onLight"
+              label="Previous"
+              onPress={() => dispatch({ type: 'GO', delta: -1 })}
+            />
+            <TextButton
+              tone="onLight"
               label={state.showAnswer ? 'Hide answer' : 'Show answer'}
               onPress={() => dispatch({ type: 'TOGGLE_ANSWER' })}
             />
-            <TextButton dark label="Next" onPress={() => dispatch({ type: 'GO', delta: 1 })} />
+            <TextButton
+              tone="onLight"
+              label="Next"
+              onPress={() => dispatch({ type: 'GO', delta: 1 })}
+            />
           </View>
         </View>
 
@@ -191,7 +201,11 @@ export function SpeechLabScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{errorCopy(state.error.code)}</Text>
             {state.error.code === 'not-allowed' ? (
-              <TextButton dark label="Open Settings" onPress={() => void Linking.openSettings()} />
+              <TextButton
+                tone="onLight"
+                label="Open Settings"
+                onPress={() => void Linking.openSettings()}
+              />
             ) : null}
             <Text style={styles.small}>Code: {state.error.code}</Text>
           </View>
@@ -231,7 +245,7 @@ export function SpeechLabScreen() {
               accessibilityLabel="Type the term"
               style={styles.input}
             />
-            <TextButton dark label="Check" onPress={onTypedSubmit} />
+            <TextButton tone="onLight" label="Check" onPress={onTypedSubmit} />
           </View>
         </View>
 
@@ -267,45 +281,6 @@ function VerdictBadge({ verdict }: { verdict: MatchResult['verdict'] }) {
         {look.icon} {look.text.toUpperCase()}
       </Text>
     </View>
-  );
-}
-
-function Chip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      onPress={onPress}
-      style={[styles.chip, selected && styles.chipSelected]}
-    >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-function TextButton({
-  label,
-  onPress,
-  dark = false,
-}: {
-  label: string;
-  onPress: () => void;
-  dark?: boolean;
-}) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.textButton}>
-      <Text style={[styles.textButtonLabel, { color: dark ? colors.violet : colors.sunny }]}>
-        {label}
-      </Text>
-    </Pressable>
   );
 }
 
@@ -376,18 +351,6 @@ const styles = StyleSheet.create({
   },
   altRow: { flexDirection: 'row', justifyContent: 'space-between', gap: space.s8 },
   altText: { ...textStyle('bodyMedium'), color: colors.night, flexShrink: 1 },
-  chip: {
-    minHeight: sizes.minTouch,
-    justifyContent: 'center',
-    paddingHorizontal: space.s14,
-    borderRadius: radius.chip,
-    backgroundColor: surfaces.glass,
-  },
-  chipSelected: { backgroundColor: colors.sunny },
-  chipText: { ...textStyle('chip'), color: colors.white },
-  chipTextSelected: { color: colors.night },
-  textButton: { minHeight: sizes.minTouch, minWidth: sizes.minTouch, justifyContent: 'center' },
-  textButtonLabel: { ...textStyle('chip') },
   input: {
     flex: 1,
     minHeight: sizes.minTouch,
