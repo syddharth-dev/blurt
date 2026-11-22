@@ -6,7 +6,10 @@ import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fromPromise } from 'xstate';
-import { endpoints, isOffline, refreshProgress } from '@/shared/api';
+import { refreshProgress } from '@/shared/api';
+import { useAuth } from '@/shared/auth/session';
+import { isOnlineConfigured } from '@/shared/config';
+import { enqueue, isLocalRound } from '@/shared/sync';
 import {
   KeyboardAvoidingView,
   Linking,
@@ -38,6 +41,7 @@ import { bubbleFor, micLabel } from './copy';
 import { roundMachine, type EvaluateInput } from './machine/roundMachine';
 import { nextHint, phaseOf, progressLabel, tilesFor } from './machine/roundView';
 import { useRoundLoad, type RoundSetup } from './roundSource';
+import { sendAttempt, sendFinish, sendSkip, type RoundRef } from './roundSync';
 
 /** Until the Profile screen adds a speech-language setting (SCREENS.md → still to design). */
 const SPEECH_LANG = 'en-US';
@@ -65,60 +69,64 @@ export function PlayScreen({ topicId, termIds }: { topicId: string; termIds?: st
   return <RoundView round={load.round} />;
 }
 
-/** The server's verdict when online; the phone's own check when offline (AGENTS.md rule 3). */
+/** The server's verdict when it answers; the phone's own check when offline (AGENTS.md rule 3). */
 async function checkAnswer(
-  roundId: string | null,
+  ref: RoundRef,
   input: EvaluateInput,
   onOffline: () => void,
 ): Promise<MatchResult> {
   const local = matchAnswer(input.term, input.alternatives, { inputMode: input.inputMode });
-  if (!roundId) return local;
-  try {
-    const res = await endpoints.attempt(roundId, {
+  const res = await sendAttempt(
+    ref,
+    {
       termId: input.term.id,
       alternatives: input.alternatives,
       inputMode: input.inputMode,
       hintsUsed: input.hintsUsed,
       ms: Math.round(input.ms),
       idempotencyKey: randomUUID(),
-    });
-    return {
-      verdict: res.verdict,
-      matched: res.matched,
-      feedback: res.feedback,
-      strategy: res.verdict === local.verdict ? local.strategy : 'none',
-    };
-  } catch (e) {
-    if (isOffline(e)) onOffline();
-    return local;
-  }
+    },
+    onOffline,
+  );
+  if (!res) return local;
+  return {
+    verdict: res.verdict,
+    matched: res.matched,
+    feedback: res.feedback,
+    strategy: res.verdict === local.verdict ? local.strategy : 'none',
+  };
 }
 
 function RoundView({ round }: { round: RoundSetup }) {
   const [recognizer] = useState(() => createSpeechRecognizer());
-  const [offline, setOffline] = useState(round.roundId === null);
+  // Signed in but the server was unreachable at the start: play now, sync later.
+  const queueable = useAuth((s) => s.status === 'signedIn') && isOnlineConfigured();
+  const [ref] = useState<RoundRef>(
+    () => round.roundId ?? (queueable ? `local-${randomUUID()}` : null),
+  );
+  const [offline, setOffline] = useState(ref !== null && isLocalRound(ref));
+  useEffect(() => {
+    if (ref && isLocalRound(ref)) {
+      void enqueue({ kind: 'start', localId: ref, termIds: round.terms.map((t) => t.id) });
+    }
+  }, [ref, round.terms]);
   const machine = useMemo(() => {
     const hints = recognizerHints(round.terms);
-    const roundId = round.roundId;
+    const goneOffline = () => setOffline(true);
     return roundMachine.provide({
       actions: {
         startListening: () => recognizer.start({ lang: SPEECH_LANG, hints }),
         stopListening: () => recognizer.stop(),
         abortListening: () => recognizer.abort(),
-        reportSkip: (_, { termId }) => {
-          if (!roundId) return;
-          endpoints.skip(roundId, { termId, idempotencyKey: randomUUID() }).catch((e: unknown) => {
-            if (isOffline(e)) setOffline(true);
-          });
-        },
+        reportSkip: (_, { termId }) => void sendSkip(ref, termId, randomUUID(), goneOffline),
       },
       actors: {
         evaluateAnswer: fromPromise<MatchResult, EvaluateInput>(({ input }) =>
-          checkAnswer(roundId, input, () => setOffline(true)),
+          checkAnswer(ref, input, goneOffline),
         ),
       },
     });
-  }, [recognizer, round.terms, round.roundId]);
+  }, [recognizer, round.terms, ref]);
   const [snapshot, send] = useMachine(machine, { input: { terms: round.terms } });
   const setLast = useRoundResults((s) => s.setLast);
 
@@ -153,16 +161,11 @@ function RoundView({ round }: { round: RoundSetup }) {
     if (snapshot.status !== 'done' || !snapshot.output || handedOff.current) return;
     handedOff.current = true;
     const out = snapshot.output;
-    const serverRound = round.roundId;
-    const finishOnServer = serverRound
-      ? endpoints.finish(serverRound, localDateOf(new Date())).then(
-          (s) => {
-            refreshProgress();
-            return s;
-          },
-          () => null,
-        )
-      : Promise.resolve(null);
+    const serverRound = ref && !isLocalRound(ref) ? ref : null;
+    const finishOnServer = sendFinish(ref, localDateOf(new Date())).then((s) => {
+      if (s) refreshProgress();
+      return s;
+    });
     if (out.endedBy === 'quit') {
       // Still saved, so answers given before quitting count towards XP and the streak.
       void finishOnServer;
@@ -195,7 +198,7 @@ function RoundView({ round }: { round: RoundSetup }) {
       }
       router.replace(`/summary/${id}`);
     });
-  }, [snapshot.status, snapshot.output, round, setLast]);
+  }, [snapshot.status, snapshot.output, round, setLast, ref]);
 
   async function onMic() {
     if (phase === 'listening') return send({ type: 'TAP_MIC' });
@@ -245,7 +248,7 @@ function RoundView({ round }: { round: RoundSetup }) {
             />
             {offline ? (
               <Text style={styles.offline}>
-                Offline: answers are checked on your phone and this round won&apos;t be saved.
+                Offline: answers are checked on your phone and saved when you&apos;re back online.
               </Text>
             ) : null}
 

@@ -2,11 +2,11 @@ import { levelFor } from '@blurt/shared/progress';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { queryClient } from '@/shared/api';
-import { signOut, useAuth } from '@/shared/auth/session';
+import { useAuth } from '@/shared/auth/session';
 import { Pip } from '@/shared/mascot';
 import { useProgress } from '@/shared/progress/useProgress';
 import { SceneBackground } from '@/shared/scene';
+import { signOut } from '@/shared/sync';
 import { FlameIcon } from '@/shared/ui/icons';
 import { TAB_BAR_SPACE } from '@/shared/ui/TabBar';
 import { TextButton } from '@/shared/ui/TextButton';
@@ -61,10 +61,7 @@ export function ProfileScreen() {
             <Pressable
               accessibilityRole="button"
               style={styles.signOut}
-              onPress={() => {
-                queryClient.clear();
-                void signOut();
-              }}
+              onPress={() => void signOut()}
             >
               <Text style={styles.signOutText}>Sign out</Text>
             </Pressable>

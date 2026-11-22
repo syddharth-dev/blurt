@@ -9,6 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { queryClient } from '@/shared/api';
 import { useAuth } from '@/shared/auth/session';
 import { isOnlineConfigured } from '@/shared/config';
+import { useSync } from '@/shared/sync';
 import { colors, fontAssets } from '@/theme';
 
 export { ErrorBoundary } from '@/shared/ui/ErrorBoundary';
@@ -20,6 +21,7 @@ export default function RootLayout() {
   const status = useAuth((s) => s.status);
   const init = useAuth((s) => s.init);
   const ready = (fontsLoaded || !!fontError) && status !== 'loading';
+  useSync();
 
   useEffect(() => {
     void init();

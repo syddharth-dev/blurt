@@ -130,7 +130,13 @@ Routes live in `apps/mobile/app/` (Expo Router uses it because there is no `src/
 ### Going online (Phase 3)
 - **Sign-in:** email plus a 6-digit code (Supabase email OTP), in `features/auth/`. The root layout reads the saved session at launch and uses Expo Router's `Stack.Protected` to show either sign-in or the app. A build without `EXPO_PUBLIC_*` settings skips sign-in and plays offline.
 - **Rounds:** `features/play/roundSource.ts` starts the round on the server (`POST /rounds`). The round machine's `evaluateAnswer` actor sends each answer to `/attempts` and uses the **server's** verdict. If the server can't be reached, the round runs on the bundled starter set, or answers are checked on the phone, and an "Offline" note shows (step 4 adds the queue that sends them later). Skips go to `/skip`, and the end of a round goes to `/finish`, whose summary (XP before/after, streak) feeds the Summary screen.
-- **Progress:** Home, Topics and Me read `/me` and `/subjects` through TanStack Query (`useProgress`). Values are 0 until loaded.
+- **Progress:** Home, Topics and Me read `/me` and `/subjects` through TanStack Query (`useProgress`). The last-known values are saved to encrypted storage and restored at launch, so they show offline too (`api/progressCache.ts`).
+- **Offline outbox** (`shared/sync/outbox.ts`): when the server can't be reached, actions are queued in encrypted MMKV and sent in order at sign-in and whenever the app returns to the foreground.
+  - A round started offline gets a temporary `local-…` id. Its queued `start` creates the real round first (`POST /rounds` with its term ids), then its answers are re-checked by the server, so XP stays server-decided.
+  - Answers keep their idempotency key, so a retry never counts twice.
+  - Actions the server rejects for good (4xx) are dropped so they can't block the queue. Server errors stay queued.
+  - Signing out tries to send the queue once more, then clears it and the cached progress, so nothing leaks into the next student's account.
+  - The round's sending logic lives in `features/play/roundSync.ts`.
 
 ## Shared package
 ```
