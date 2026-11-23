@@ -16,7 +16,7 @@ import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { TextButton } from '@/shared/ui/TextButton';
 import { Wordmark } from '@/shared/ui/Wordmark';
 import { colors, radius, sizes, space, surfaces, textStyle } from '@/theme';
-import { authErrorCopy, cleanCode, looksLikeEmail } from './authCopy';
+import { authErrorCopy, authErrorDetail, cleanCode, looksLikeEmail } from './authCopy';
 
 const RESEND_SECONDS = 60;
 
@@ -30,6 +30,8 @@ export function SignInScreen() {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** Development builds only: the raw error, to diagnose sign-in problems. */
+  const [detail, setDetail] = useState('');
   const [wait, setWait] = useState(0);
 
   useEffect(() => {
@@ -37,6 +39,18 @@ export function SignInScreen() {
     const t = setTimeout(() => setWait((w) => w - 1), 1000);
     return () => clearTimeout(t);
   }, [wait]);
+
+  function fail(
+    e: { name?: string; code?: string; status?: number; message?: string },
+    step: string,
+  ) {
+    setError(authErrorCopy(e));
+    if (__DEV__) {
+      const info = authErrorDetail(e);
+      console.warn(`[sign-in] ${step} failed: ${info}`);
+      setDetail(info);
+    }
+  }
 
   async function sendCode() {
     if (!looksLikeEmail(email)) {
@@ -49,12 +63,13 @@ export function SignInScreen() {
     }
     setBusy(true);
     setError('');
+    setDetail('');
     const { error: e } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: { shouldCreateUser: true },
     });
     setBusy(false);
-    if (e) return setError(authErrorCopy(e));
+    if (e) return fail(e, 'send code');
     setStep('code');
     setCode('');
     setWait(RESEND_SECONDS);
@@ -71,7 +86,7 @@ export function SignInScreen() {
     });
     setBusy(false);
     // On success the session store flips to signed in and the router shows Home.
-    if (e) setError(authErrorCopy(e));
+    if (e) fail(e, 'verify code');
   }
 
   const onEmail = step === 'email';
@@ -135,6 +150,7 @@ export function SignInScreen() {
                   {error}
                 </Text>
               ) : null}
+              {__DEV__ && detail ? <Text style={styles.detail}>{detail}</Text> : null}
               <PrimaryButton
                 label={busy ? 'One moment…' : onEmail ? 'Send my code' : 'Sign in'}
                 onPress={() => void (onEmail ? sendCode() : verify())}
@@ -192,5 +208,6 @@ const styles = StyleSheet.create({
     padding: space.s12,
     overflow: 'hidden',
   },
+  detail: { ...textStyle('chip'), color: colors.ink2 },
   links: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
 });

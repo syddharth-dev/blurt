@@ -16,10 +16,25 @@ export function authErrorCopy(
   if (code === 'email_address_invalid' || code === 'validation_failed') {
     return "That email doesn't look right. Check it and try again.";
   }
+  if ((error.status ?? 0) >= 500 || /sending|smtp|mail/i.test(error.message ?? '')) {
+    return "Couldn't send the email right now. Try again in a minute.";
+  }
   if (code === 'signup_disabled' || code === 'email_provider_disabled') {
     return "Email sign-in isn't switched on yet. Ask your teacher.";
   }
   return 'Something went wrong. Try again in a moment.';
+}
+
+/** Developer-only detail for an auth error: name, status, code and message. */
+export function authErrorDetail(error: {
+  name?: string;
+  code?: string;
+  status?: number;
+  message?: string;
+}): string {
+  return [error.name, error.status, error.code, error.message]
+    .filter((v) => v !== undefined && v !== '')
+    .join(' · ');
 }
 
 export const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());

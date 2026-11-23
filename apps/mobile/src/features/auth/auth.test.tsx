@@ -24,6 +24,13 @@ describe('auth copy', () => {
       'No connection. Check your Wi-Fi and try again.',
     );
     expect(authErrorCopy({ code: 'mystery' })).not.toMatch(/wrong!|error/i);
+    expect(
+      authErrorCopy({
+        code: 'unexpected_failure',
+        status: 500,
+        message: 'Error sending magic link email',
+      }),
+    ).toBe("Couldn't send the email right now. Try again in a minute.");
   });
 
   it('checks emails and keeps codes to 6 digits', () => {
