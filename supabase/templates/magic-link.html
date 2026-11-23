@@ -7,8 +7,9 @@
 <meta name="supported-color-schemes" content="light only">
 <title>Your Blurt! code</title>
 <!--
-  Blurt! sign-in code email (Supabase → Authentication → Emails → Templates → Magic Link).
-  Supabase sends this template for email OTP sign-in; {{ .Token }} is the 6-digit code.
+  Blurt! sign-in code email. Paste into BOTH Supabase templates (Authentication → Emails →
+  Templates): "Magic Link" (returning students) and "Confirm signup" (new email addresses).
+  {{ .Token }} is the 6-digit code.
   Colours mirror docs/BRAND.md: violet #5B2EFF, night #160C3A, sunny #FFC93C,
   sunnyShadow #C98F00, lilac #EFE9FF, ink2 #4B4370. Email clients ignore CSS variables,
   so the hex values are inlined here on purpose.
