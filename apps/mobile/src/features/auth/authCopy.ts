@@ -39,5 +39,11 @@ export function authErrorDetail(error: {
 
 export const looksLikeEmail = (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
 
-/** The code arrives as 6 digits; keep only digits while typing. */
-export const cleanCode = (s: string) => s.replace(/\D/g, '').slice(0, 6);
+/**
+ * Supabase sends 6–10 digit codes depending on the project's "Email OTP length" setting
+ * (this project uses 8). Accept any length in that range; keep only digits while typing.
+ */
+export const CODE_LENGTH = { min: 6, max: 10 } as const;
+export const cleanCode = (s: string) => s.replace(/\D/g, '').slice(0, CODE_LENGTH.max);
+export const isCompleteCode = (s: string) =>
+  s.length >= CODE_LENGTH.min && s.length <= CODE_LENGTH.max;

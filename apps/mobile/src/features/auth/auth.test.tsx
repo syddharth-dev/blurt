@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { authErrorCopy, cleanCode, looksLikeEmail } from './authCopy';
+import { authErrorCopy, cleanCode, isCompleteCode, looksLikeEmail } from './authCopy';
 import { SignInScreen } from './SignInScreen';
 
 const mockAuth = { signInWithOtp: jest.fn(), verifyOtp: jest.fn() };
@@ -33,17 +33,21 @@ describe('auth copy', () => {
     ).toBe("Couldn't send the email right now. Try again in a minute.");
   });
 
-  it('checks emails and keeps codes to 6 digits', () => {
+  it('checks emails and accepts 6–10 digit codes (this project sends 8)', () => {
     expect(looksLikeEmail(' ana@school.edu ')).toBe(true);
     expect(looksLikeEmail('ana@school')).toBe(false);
-    expect(cleanCode('12 34-567')).toBe('123456');
+    expect(cleanCode('1234 5678')).toBe('12345678');
+    expect(cleanCode('12345678901234')).toBe('1234567890');
+    expect(isCompleteCode('12345')).toBe(false);
+    expect(isCompleteCode('123456')).toBe(true);
+    expect(isCompleteCode('12345678')).toBe(true);
   });
 });
 
 describe('SignInScreen', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('sends a code to the email, then verifies the 6 digits', async () => {
+  it('sends a code to the email, then verifies all 8 digits', async () => {
     mockAuth.signInWithOtp.mockResolvedValue({ error: null });
     mockAuth.verifyOtp.mockResolvedValue({ error: null });
     await render(<SignInScreen />);
@@ -54,11 +58,11 @@ describe('SignInScreen', () => {
       options: { shouldCreateUser: true },
     });
     expect(await screen.findByText('Check your email.')).toBeOnTheScreen();
-    await fireEvent.changeText(screen.getByLabelText('6-digit code'), '123456');
+    await fireEvent.changeText(screen.getByLabelText('Code from the email'), '12345678');
     await fireEvent.press(screen.getByText('Sign in'));
     expect(mockAuth.verifyOtp).toHaveBeenCalledWith({
       email: 'ana@school.edu',
-      token: '123456',
+      token: '12345678',
       type: 'email',
     });
   });
@@ -69,7 +73,7 @@ describe('SignInScreen', () => {
     await render(<SignInScreen />);
     await fireEvent.changeText(screen.getByLabelText('Your email'), 'ana@school.edu');
     await fireEvent.press(screen.getByText('Send my code'));
-    await fireEvent.changeText(await screen.findByLabelText('6-digit code'), '000000');
+    await fireEvent.changeText(await screen.findByLabelText('Code from the email'), '00000000');
     await fireEvent.press(screen.getByText('Sign in'));
     expect(
       await screen.findByText("That code didn't work. Check it, or send a new one."),

@@ -16,12 +16,19 @@ import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { TextButton } from '@/shared/ui/TextButton';
 import { Wordmark } from '@/shared/ui/Wordmark';
 import { colors, radius, sizes, space, surfaces, textStyle } from '@/theme';
-import { authErrorCopy, authErrorDetail, cleanCode, looksLikeEmail } from './authCopy';
+import {
+  authErrorCopy,
+  authErrorDetail,
+  cleanCode,
+  CODE_LENGTH,
+  isCompleteCode,
+  looksLikeEmail,
+} from './authCopy';
 
 const RESEND_SECONDS = 60;
 
 /**
- * Sign in with email + a 6-digit code (Supabase email OTP). New emails get an account;
+ * Sign in with email + a code (Supabase email OTP; 6–10 digits depending on the project). New emails get an account;
  * the API creates the student profile on first use. Onboarding (grade, class code) comes later.
  */
 export function SignInScreen() {
@@ -76,7 +83,11 @@ export function SignInScreen() {
   }
 
   async function verify() {
-    if (code.length !== 6 || !supabase) return;
+    if (!supabase) return;
+    if (!isCompleteCode(code)) {
+      setError('Type the whole code from the email.');
+      return;
+    }
     setBusy(true);
     setError('');
     const { error: e } = await supabase.auth.verifyOtp({
@@ -104,11 +115,11 @@ export function SignInScreen() {
               sub={
                 onEmail
                   ? "What's your email? I'll send you a code."
-                  : `I sent a 6-digit code to ${email.trim()}.`
+                  : `I sent a code to ${email.trim()}.`
               }
             />
             <View style={styles.card}>
-              <Text style={styles.label}>{onEmail ? 'YOUR EMAIL' : '6-DIGIT CODE'}</Text>
+              <Text style={styles.label}>{onEmail ? 'YOUR EMAIL' : 'CODE FROM THE EMAIL'}</Text>
               {onEmail ? (
                 <TextInput
                   value={email}
@@ -130,14 +141,14 @@ export function SignInScreen() {
                   value={code}
                   onChangeText={(t) => setCode(cleanCode(t))}
                   onSubmitEditing={() => void verify()}
-                  placeholder="000000"
+                  placeholder="Code"
                   placeholderTextColor={colors.ink2}
                   keyboardType="number-pad"
                   autoComplete="one-time-code"
                   textContentType="oneTimeCode"
-                  maxLength={6}
+                  maxLength={CODE_LENGTH.max}
                   autoFocus
-                  accessibilityLabel="6-digit code"
+                  accessibilityLabel="Code from the email"
                   style={[styles.input, styles.code]}
                 />
               )}
