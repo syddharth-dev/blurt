@@ -49,6 +49,12 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 - With a ready picture and a highlight, teachers can now publish their own terms.
 - The app shows uploaded pictures from step 5 (with classes), when students can first receive teacher topics.
 
+**Built (Phase 4, step 4): Test with my voice and pronunciation**
+- **Test with my voice** (left column of the term editor): "Start listening" uses the browser's speech recognition (Chrome and Edge; Safari as `webkitSpeechRecognition`), with up to 5 guesses per phrase. What was heard goes to `POST /teacher/match-test` with the term **as it is in the editor, saved or not**, and the server's matcher, the same one students are checked with, answers. The result shows Correct / Close / Not accepted (icon, text and colour), which matcher step decided ("listed under Never accept", "sounds like the answer"…), Pip's feedback, and the recognizer's other guesses. If it isn't correct, a tip suggests adding the word under "Also accept".
+- **Typing** a phrase works in every browser (for Firefox, or to test spellings).
+- **Play pronunciation** uses the browser's voice (`speechSynthesis`, en-US, a little slower).
+- Code: `apps/dashboard/src/features/topics/VoiceTest.tsx`.
+
 
 1. **Sign in** (Supabase Auth, same accounts as the app).
 2. **Overview**: my classes, recent activity, terms students miss most this week.
@@ -80,7 +86,7 @@ Left: the picture, as students will see it. Right: the form. A live **phone prev
 
 Buttons:
 - **Test with my voice**: uses the browser's microphone and speech recognition (works in Chrome and Edge) and runs the *same matcher* the server uses, showing "Correct / Close / Wrong" and what was heard. Teachers catch recognition problems before students do.
-- **Play pronunciation**: the clip generated automatically when the term is saved. Regenerate if it sounds wrong.
+- **Play pronunciation**: says the answer with the browser's built-in voice, as the app does with the phone's voice (Phase 4 decision: no pre-made audio clips).
 - **Save draft** / **Publish**. Only published terms reach students. Editing a published term creates a new version; rounds already in progress keep the old one.
 
 Validation before publishing: picture uploaded, highlight set, answer, clue and fact filled, and the answer isn't also listed as a confusable.

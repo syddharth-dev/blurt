@@ -409,6 +409,41 @@ export const ConfusableSuggestions = z.object({
 });
 export type ConfusableSuggestions = z.infer<typeof ConfusableSuggestions>;
 
+/**
+ * POST /teacher/match-test ("Test with my voice"): the term as it is in the editor, saved or
+ * not, plus what the browser heard. Runs the same matcher the server uses for students.
+ */
+export const MatchTestRequest = z
+  .object({
+    term: z
+      .object({
+        canonical: z.string().trim().min(1).max(60),
+        accept: z.array(z.string().max(60)).max(20).default([]),
+        close: z
+          .array(z.object({ text: z.string().max(60), reason: z.string().max(120) }))
+          .max(20)
+          .default([]),
+        confusables: z
+          .array(z.object({ text: z.string().max(60), feedback: z.string().max(160) }))
+          .max(20)
+          .default([]),
+      })
+      .strict(),
+    alternatives: z.array(z.string().max(200)).min(1).max(10),
+    inputMode: InputMode,
+  })
+  .strict();
+export type MatchTestRequest = z.input<typeof MatchTestRequest>;
+
+export const MatchTestResult = z.object({
+  verdict: Verdict,
+  matched: z.string().nullable(),
+  feedback: z.string().nullable(),
+  /** Which matcher step decided: shown to teachers so they can see why */
+  strategy: z.enum(['confusable', 'exact', 'family', 'phonetic', 'near', 'none']),
+});
+export type MatchTestResult = z.infer<typeof MatchTestResult>;
+
 // ── Errors and health ────────────────────────────────────────────────────────
 
 /** Every error response uses this one shape. */

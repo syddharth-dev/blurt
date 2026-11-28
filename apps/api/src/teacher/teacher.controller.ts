@@ -1,8 +1,11 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { matchAnswer } from '@blurt/shared/matcher';
 import {
   ConfusableSuggestionsRequest,
   CreateTerm,
   CreateTopic,
+  MatchTestRequest,
   ReorderTerms,
   UpdateTerm,
   UpdateTopic,
@@ -98,6 +101,22 @@ export class TeacherController {
     @Body({ schema: ConfusableSuggestionsRequest }) body: ConfusableSuggestionsRequest,
   ) {
     return this.teacher.confusableSuggestions(user, body);
+  }
+
+  /**
+   * "Test with my voice": the same matcher students are checked with, on the editor's current
+   * (maybe unsaved) term. It reads and stores nothing, so there is no owner to check.
+   */
+  @Post('match-test')
+  @HttpCode(200)
+  @Throttle({ default: { ttl: 60_000, limit: 120 } })
+  matchTest(@Body({ schema: MatchTestRequest }) body: MatchTestRequest) {
+    const { verdict, matched, feedback, strategy } = matchAnswer(
+      MatchTestRequest.parse(body).term,
+      body.alternatives,
+      { inputMode: body.inputMode },
+    );
+    return { verdict, matched, feedback, strategy };
   }
 
   @Get('terms/:id')

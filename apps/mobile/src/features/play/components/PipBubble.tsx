@@ -7,7 +7,7 @@ import type { BubbleContent } from '../copy';
 type Props = {
   mood: PipMood;
   bubble: BubbleContent;
-  /** Pronunciation audio arrives with Phase 4 (TTS clips); until then the button shows syllables. */
+  /** Speaks the term with the phone's voice (expo-speech). Missing → the button is disabled. */
   onPronounce?: () => void;
 };
 

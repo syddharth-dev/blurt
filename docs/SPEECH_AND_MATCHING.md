@@ -70,7 +70,9 @@ Rules:
 - Every term set also gets a whole-set test: no term's answer (or ACCEPT variant) may be accepted for any other term in the set (`packages/shared/src/content/grade8.test.ts`).
 
 ## 3. Pronunciation help
-- Pre-generate one clip per term with a cloud text-to-speech service at content-creation time, store it on the CDN, and play it with `expo-audio` from the "nu·cle·us" button.
+- **Phase 4 decision:** the "nu·cle·us" button speaks the term with the phone's built-in voice (`expo-speech`, en-US, rate 0.85), in `apps/mobile/src/shared/speech/pronounce.ts`. It works offline and costs nothing. Speech stops before the mic starts, so the recognizer never hears the phone. The module loads lazily: on a build without it, the button is disabled.
+- The dashboard's "Play pronunciation" uses the browser's voice the same way.
+- `Term.audioUrl` stays in the data model for later. If built-in voices turn out poor on some phones, pre-generate one clip per term with a cloud text-to-speech service and play it with `expo-audio` when `audioUrl` is set.
 - Optional later: pronunciation *scoring* with Azure AI Speech's pronunciation assessment for a "Say it like a scientist" practice mode.
 
 ## 4. Testing speech without talking

@@ -158,7 +158,7 @@ apps/api/src/
   progress/     # XP, levels, streaks, mastery per term
   leaderboard/  # weekly leagues (Redis sorted sets)
   teacher/      # topics, terms, pictures, classes, reports, import (role: teacher)
-  media/        # signed upload URLs, image-processing jobs (sharp), TTS audio jobs
+  media/        # signed upload URLs, image-processing jobs (sharp)
   classes/      # join codes, enrollments, assignments
   admin/        # teacher invites, library promotion, schools (role: admin)
   common/       # filters, interceptors, config, prisma service

@@ -33,3 +33,9 @@ jest.mock('expo-crypto', () => {
     getRandomBytes: (len: number) => new Uint8Array(len).map((_, i) => (i * 37) % 256),
   };
 });
+
+jest.mock('expo-speech', () => ({
+  speak: jest.fn(),
+  stop: jest.fn(() => Promise.resolve()),
+  isSpeakingAsync: jest.fn(() => Promise.resolve(false)),
+}));

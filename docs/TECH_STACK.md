@@ -32,7 +32,7 @@ The guiding choice: **one language (TypeScript) everywhere**, managed services f
 | File storage / CDN | **Supabase Storage** | Diagrams (SVG) and pronunciation audio (MP3) served from a CDN. |
 | Cache / leaderboards | **Redis** (e.g. Upstash) | Sorted sets make weekly leagues trivial. Also used for rate limits. |
 | Background jobs | **BullMQ** (on Redis) | Streak resets, league rollover, generating pronunciation audio. |
-| Text-to-speech (build time) | A cloud TTS service (Google, Azure or ElevenLabs) | Pre-generate one clip per term. Don't call it live. |
+| Text-to-speech | **expo-speech** (phone) and `speechSynthesis` (dashboard) | Phase 4 decision: the device's built-in voice says the term. Free and offline. A cloud TTS service (Google, Azure or ElevenLabs) for pre-made clips stays an option for later. |
 | Cloud speech fallback (optional, later) | Azure AI Speech (has pronunciation assessment) or Google Cloud Speech-to-Text (phrase hints) | For phones with weak built-in recognition, or to score pronunciation. |
 | Validation | Zod (shared) or class-validator | |
 | Docs | OpenAPI via `@nestjs/swagger` | Auto-generated API reference. |

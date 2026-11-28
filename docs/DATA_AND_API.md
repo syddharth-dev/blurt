@@ -270,7 +270,7 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | PATCH | `/teacher/pictures/:id` | `{altText}` |
 | POST | `/teacher/topics/:id/terms` | Create a term |
 | PATCH/DELETE | `/teacher/terms/:id` | Edit (published terms get a new version) |
-| POST | `/teacher/terms/:id/audio` | Regenerate the pronunciation clip |
+| POST | `/teacher/terms/:id/audio` | Regenerate the pronunciation clip (not built: Phase 4 uses the device voice instead) |
 | POST | `/teacher/terms/confusable-suggestions` | `{answer, topicId}` → similar-sounding terms to tick |
 | GET | `/teacher/terms/:id` | One term with its publish checks (for the editor) |
 | PUT | `/teacher/topics/:id/terms/order` | `{termIds}` → new play order |
@@ -327,3 +327,7 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **The job** (`PictureJobs`): download → `processPicture` (real type from the bytes, sanitize and rasterize SVG, rotate, max 1600 px WebP + 320 px thumbnail, no metadata) → public `pictures` bucket → `READY` with `url`, `thumbUrl`, `width`, `height`. Failures end `FAILED`. The original upload is always deleted.
 - **Access:** a teacher sees and changes only their own pictures (403 otherwise, tested); admins see all; bundled diagrams can be viewed by any teacher but not changed. A term may use only a `READY` picture to publish.
 - **Rate limit:** 30 upload URLs a minute per client. Without the secret key, upload-url answers 503 `STORAGE_NOT_CONFIGURED`.
+
+### Built in Phase 4 step 4 (decisions)
+- `POST /teacher/match-test` takes `{term: {canonical, accept, close, confusables}, alternatives, inputMode}` (`MatchTestRequest`) and returns `{verdict, matched, feedback, strategy}`. It runs `matchAnswer` from `@blurt/shared/matcher`, the function used for students' attempts. It reads and stores nothing, so it has no owner check; it is teachers only (a student gets 403, tested) and limited to 120 a minute.
+- **Pronunciation** uses the device's voice in the app and the dashboard, so there is no audio job and `audioUrl` stays null for now.

@@ -24,6 +24,7 @@ import { useConfusableSuggestions, usePicture, useTerm, useTermActions, useTopic
 import { PhonePreview } from './PhonePreview';
 import { aspectOf, pictureSrc } from './picture';
 import { PictureField } from './PictureField';
+import { VoiceTest } from './VoiceTest';
 
 /** Rows with text need their reason or feedback; blank rows are dropped on save. */
 function needsSecond(second: 'reason' | 'feedback', message: string) {
@@ -185,6 +186,14 @@ function Editor({ topic, term }: { topic: TeacherTopicDetail; term?: TeacherTerm
               onHighlight={setHighlight}
             />
           </Card>
+          <VoiceTest
+            term={{
+              canonical: body.canonical,
+              accept: body.accept,
+              close: body.close,
+              confusables: body.confusables,
+            }}
+          />
           <PhonePreview
             src={values.pictureId ? pictureSrc(picture) : null}
             aspect={aspectOf(picture)}

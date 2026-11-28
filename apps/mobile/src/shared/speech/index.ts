@@ -4,6 +4,7 @@ import type { SpeechRecognizer } from './types';
 export type * from './types';
 export { createMockSpeechAdapter } from './mockSpeechAdapter';
 export { errorCopy } from './copy';
+export { canPronounce, pronounce, stopPronouncing } from './pronounce';
 
 /**
  * The app's recognizer. Set EXPO_PUBLIC_SPEECH=mock to use scripted speech

@@ -20,7 +20,7 @@ The Home (top bar, daily challenge card, topic cards, tab bar) and the full Roun
 Auth, content API, rounds/attempts API with the server-side matcher, XP, streaks, summary screen, offline queue, prefetching a topic's assets.
 
 ### Phase 4 — Teacher dashboard (weeks 6–8)
-Roles and teacher invites, topic and term editor, picture upload + processing + highlight drawing, "Test with my voice", confusable suggestions, pronunciation audio job, classes with join codes, assigning topics. Students join classes in the app.
+Roles and teacher invites, topic and term editor, picture upload + processing + highlight drawing, "Test with my voice", confusable suggestions, pronunciation (the device's voice; decided in Phase 4 instead of an audio job), classes with join codes, assigning topics. Students join classes in the app.
 
 ### Phase 5 — Engagement and reports (weeks 8–10)
 Home and daily challenge, assigned topics with due dates, class reports for teachers, CSV bulk import, topics with unlocks, spaced-repetition practice, leagues, haptics and sounds, Pip polish (timing, mood blends, performance on low-end phones).

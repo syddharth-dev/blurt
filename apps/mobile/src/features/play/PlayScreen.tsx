@@ -24,7 +24,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { moodFor, Pip } from '@/shared/mascot';
 import { Confetti, Float, Rise, SceneBackground, Sunburst } from '@/shared/scene';
 import { useRoundResults } from '@/shared/session/roundResults';
-import { createSpeechRecognizer, type PermissionState } from '@/shared/speech';
+import {
+  canPronounce,
+  createSpeechRecognizer,
+  pronounce,
+  stopPronouncing,
+  type PermissionState,
+} from '@/shared/speech';
 import { Placeholder } from '@/shared/ui/Placeholder';
 import { PrimaryButton } from '@/shared/ui/PrimaryButton';
 import { TextButton } from '@/shared/ui/TextButton';
@@ -115,7 +121,10 @@ function RoundView({ round }: { round: RoundSetup }) {
     const goneOffline = () => setOffline(true);
     return roundMachine.provide({
       actions: {
-        startListening: () => recognizer.start({ lang: SPEECH_LANG, hints }),
+        startListening: () => {
+          stopPronouncing();
+          return recognizer.start({ lang: SPEECH_LANG, hints });
+        },
         stopListening: () => recognizer.stop(),
         abortListening: () => recognizer.abort(),
         reportSkip: (_, { termId }) => void sendSkip(ref, termId, randomUUID(), goneOffline),
@@ -268,7 +277,11 @@ function RoundView({ round }: { round: RoundSetup }) {
 
             <LetterTiles tiles={tilesFor(c, phase)} missKey={c.missesOnTerm} />
 
-            <PipBubble mood={moodFor(phase)} bubble={bubbleFor(phase, c)} />
+            <PipBubble
+              mood={moodFor(phase)}
+              bubble={bubbleFor(phase, c)}
+              onPronounce={canPronounce() ? () => pronounce(term.display, SPEECH_LANG) : undefined}
+            />
 
             <View style={styles.bottom}>
               {phase === 'correct' ? (

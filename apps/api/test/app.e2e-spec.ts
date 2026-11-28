@@ -295,6 +295,40 @@ describe('API (e2e, in-memory data)', () => {
       expect(res.body.error.code).toBe('FORBIDDEN');
     });
 
+    it('match-test runs the shared matcher on a draft (confusables never match)', async () => {
+      const term = {
+        canonical: 'proton',
+        accept: ['protons'],
+        close: [{ text: 'protonic', reason: "that's the adjective" }],
+        confusables: [{ text: 'neutron', feedback: "That's the neutron." }],
+      };
+      const check = async (heard: string[]) =>
+        (
+          await http()
+            .post('/v1/teacher/match-test')
+            .set(as('tea-b'))
+            .send({ term, alternatives: heard, inputMode: 'voice' })
+            .expect(200)
+        ).body;
+      expect(await check(['um the protons'])).toMatchObject({
+        verdict: 'correct',
+        strategy: 'exact',
+      });
+      expect(await check(['neutron'])).toMatchObject({
+        verdict: 'wrong',
+        strategy: 'confusable',
+        feedback: "That's the neutron.",
+      });
+      expect(await check(['protonic'])).toMatchObject({ verdict: 'close', strategy: 'family' });
+    });
+
+    it('match-test is for teachers only (403 for a student)', () =>
+      http()
+        .post('/v1/teacher/match-test')
+        .set(as('stu-2'))
+        .send({ term: { canonical: 'x' }, alternatives: ['x'], inputMode: 'voice' })
+        .expect(403));
+
     it('publishing an unfinished topic is 422 NOT_READY', async () => {
       const res = await http()
         .post(`/v1/teacher/topics/${topicId}/publish`)
