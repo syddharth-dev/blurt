@@ -3,3 +3,4 @@ export * from './schemas/index.js';
 export * from './matcher/index.js';
 export * from './content/index.js';
 export * from './progress/index.js';
+export * from './authoring/index.js';

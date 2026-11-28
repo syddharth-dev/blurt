@@ -53,7 +53,7 @@ export class RoundsService {
       const round = await this.repo.createRound({
         userId: user.id,
         topicId: found.topic.id,
-        termIds: terms.map((t) => t.id),
+        terms,
       });
       return this.started(
         round.id,
@@ -69,7 +69,7 @@ export class RoundsService {
     const round = await this.repo.createRound({
       userId: user.id,
       topicId: null,
-      termIds: terms.map((t) => t.id),
+      terms,
     });
     return this.started(round.id, { id: null, title: 'Practice', subject: 'Mixed' }, terms);
   }
@@ -83,7 +83,7 @@ export class RoundsService {
       throw apiError(HttpStatus.CONFLICT, ERROR_CODES.outOfLives, 'No lives left in this round.');
     }
     this.assertOpenTerm(round, body.termId);
-    const [term] = await this.repo.termsByIds([body.termId]);
+    const term = await this.servedTerm(round, body.termId);
     if (!term) throw new NotFoundException("That term isn't available.");
 
     const earlier = round.attempts.filter((a) => a.termId === body.termId);
@@ -167,7 +167,7 @@ export class RoundsService {
     if (round.summary) return round.summary;
 
     const user = await this.users.ensure(auth);
-    const terms = await this.repo.termsByIds(round.termIds);
+    const terms = round.terms ?? (await this.repo.termsByIds(round.termIds));
     const display = new Map(terms.map((t) => [t.id, t.display]));
     const results: RoundSummaryResponse['results'] = [];
     const mastery: MasteryDelta[] = [];
@@ -230,6 +230,16 @@ export class RoundsService {
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────
+
+  /**
+   * The term as it was when the round started: a teacher's edit mid-round bumps the
+   * term's version but doesn't change a round in progress (TEACHER_DASHBOARD.md).
+   */
+  private async servedTerm(round: RoundRecord, termId: string) {
+    if (round.terms) return round.terms.find((t) => t.id === termId) ?? null;
+    const [term] = await this.repo.termsByIds([termId]);
+    return term ?? null;
+  }
 
   private started(
     roundId: string,

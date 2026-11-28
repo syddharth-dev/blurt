@@ -28,6 +28,8 @@ export type RoundRecord = {
   userId: string;
   topicId: string | null;
   termIds: string[];
+  /** The terms as served (null for rounds started before snapshots existed). */
+  terms: RoundTerm[] | null;
   status: 'ACTIVE' | 'FINISHED';
   lives: number;
   hintsUsed: number;
@@ -53,7 +55,7 @@ export abstract class RoundsRepository {
   abstract createRound(data: {
     userId: string;
     topicId: string | null;
-    termIds: string[];
+    terms: RoundTerm[];
   }): Promise<RoundRecord>;
   abstract findRound(id: string): Promise<RoundRecord | null>;
   abstract findAttempt(
@@ -128,6 +130,7 @@ function toRound(r: Prisma.RoundGetPayload<{ include: typeof roundInclude }>): R
     userId: r.userId,
     topicId: r.topicId,
     termIds: r.termIds,
+    terms: (r.terms as RoundTerm[] | null) ?? null,
     status: r.status,
     lives: r.lives,
     hintsUsed: r.hintsUsed,
@@ -194,8 +197,24 @@ export class PrismaRoundsRepository extends RoundsRepository {
     return ids.map((id) => byId.get(id)).filter((t): t is RoundTerm => !!t);
   }
 
-  async createRound(data: { userId: string; topicId: string | null; termIds: string[] }) {
-    return toRound(await this.db.round.create({ data, include: roundInclude }));
+  async createRound({
+    terms,
+    ...data
+  }: {
+    userId: string;
+    topicId: string | null;
+    terms: RoundTerm[];
+  }) {
+    return toRound(
+      await this.db.round.create({
+        data: {
+          ...data,
+          termIds: terms.map((t) => t.id),
+          terms: terms as unknown as Prisma.InputJsonValue,
+        },
+        include: roundInclude,
+      }),
+    );
   }
 
   async findRound(id: string) {

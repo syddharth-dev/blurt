@@ -10,11 +10,12 @@ import { ContentModule } from './content/content.module.js';
 import { GameplayModule } from './gameplay/gameplay.module.js';
 import { HealthModule } from './health/health.module.js';
 import { ProgressModule } from './progress/progress.module.js';
+import { TeacherModule } from './teacher/teacher.module.js';
 import { UsersModule } from './users/users.module.js';
 
 /**
  * Root module of the modular monolith (docs/ARCHITECTURE.md → "API folder structure").
- * Still to come: leaderboard (Phase 5); teacher, media, classes (Phase 4).
+ * Still to come: leaderboard (Phase 5); media, classes (Phase 4).
  */
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { UsersModule } from './users/users.module.js';
     ProgressModule,
     GameplayModule,
     AdminModule,
+    TeacherModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

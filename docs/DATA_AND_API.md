@@ -164,7 +164,7 @@ model Term {
   picture    Picture? @relation(fields: [pictureId], references: [id])
   /// Highlight box as fractions of the picture: { "shape": "ellipse"|"rect", "x": 0.41, "y": 0.38, "w": 0.18, "h": 0.2, "badge"?: "left"|"right" }
   /// "badge" optionally picks the side for the "?" badge (default: the roomier side).
-  highlight  Json
+  highlight  Json?             // null until the teacher marks the part to name
   difficulty Int      @default(1)
   status     Status   @default(DRAFT)
   version    Int      @default(1)
@@ -197,6 +197,7 @@ model Round {
   topicId   String?            // null for practice rounds (specific terms)
   classId   String?            // set when played as a class assignment
   termIds   String[]           // the terms served, in order
+  terms     Json?              // snapshot of those terms as served, so edits mid-round don't change them
   status    RoundStatus @default(ACTIVE)
   lives     Int      @default(3)
   hintsUsed Int      @default(0)
@@ -269,6 +270,11 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | PATCH/DELETE | `/teacher/terms/:id` | Edit (published terms get a new version) |
 | POST | `/teacher/terms/:id/audio` | Regenerate the pronunciation clip |
 | POST | `/teacher/terms/confusable-suggestions` | `{answer, topicId}` → similar-sounding terms to tick |
+| GET | `/teacher/terms/:id` | One term with its publish checks (for the editor) |
+| PUT | `/teacher/topics/:id/terms/order` | `{termIds}` → new play order |
+| POST | `/teacher/topics/:id/duplicate` | Draft copy (own topics, or any published library topic) |
+| GET | `/teacher/library` | Published starter-library topics to copy |
+| GET | `/teacher/subjects` | Subjects for the topic form |
 | POST | `/teacher/match-test` | `{termDraft, alternatives[]}` → verdict (for "Test with my voice") |
 | POST | `/teacher/import` | CSV + zip → draft terms + a report of problems |
 | GET/POST | `/teacher/classes` | List / create classes (generates a join code) |
@@ -304,3 +310,12 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **Visibility:** students see published topics in the shared library (`visibility = LIBRARY`); class-assigned topics arrive with Phase 4. Someone else's round returns 404, never 403, so round ids don't leak.
 - **Error codes:** `ROUND_FINISHED`, `OUT_OF_LIVES`, `NO_SKIPS_LEFT`, `TERM_NOT_IN_ROUND`, `TERM_DONE`, `TOPIC_LOCKED` (`ERROR_CODES` in `@blurt/shared/schemas`).
 - **Starter library:** `pnpm --filter api db:seed` loads the 30 Grade 8 terms, the 7 diagrams (`Picture.diagram`) and the 4 subjects, owned by a `library` system user. It's safe to run again.
+
+### Built in Phase 4 step 2 (decisions)
+- **Who can touch what:** teacher routes are `@Roles('TEACHER')` (admins pass too). `TeacherService` then checks the topic's owner: anyone else gets **403** (`FORBIDDEN`), admins can open everything, and a missing topic or term is 404. Tests cover every route.
+- **Teacher topics** are created as `DRAFT` with `visibility = CLASS`. Students see them once they're assigned to a class (step 5).
+- **Publishing:** `POST /teacher/topics/:id/publish` runs `termChecks` (`@blurt/shared/authoring`) on every live term and answers **422 `NOT_READY`** with what's missing. A term can also be published on its own (`publish: true` on create or PATCH). Saving a published term must still pass the checks.
+- **Versions:** a changed published term gets `version + 1`. Rounds store the terms they served in `Round.terms` and check attempts against that snapshot, so a round in progress never changes under a student. Attempts record `termVersion`.
+- **Deleting:** `DELETE /teacher/terms/:id` deletes a draft and archives a published term. `DELETE /teacher/topics/:id` archives; archived topics refuse edits (409 `TOPIC_ARCHIVED`).
+- **Pictures on terms:** a term may point at the teacher's own picture or a bundled diagram, never another teacher's (403).
+- `Term.highlight` is nullable (null until the part to name is marked).

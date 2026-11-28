@@ -29,6 +29,10 @@
     "./progress": {
       "types": "./dist/progress/index.d.ts",
       "default": "./dist/progress/index.js"
+    },
+    "./authoring": {
+      "types": "./dist/authoring/index.d.ts",
+      "default": "./dist/authoring/index.js"
     }
   },
   "files": [

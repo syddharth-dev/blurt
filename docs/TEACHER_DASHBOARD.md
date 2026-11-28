@@ -26,6 +26,18 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 - **The first admin** is made with `pnpm --filter api make-admin`.
 - Code: `apps/dashboard/src/`. The signed-in area renders only in the browser (`use(browser())` in a Suspense boundary), since the session lives in localStorage.
 
+**Built (Phase 4, step 2): topics and the term editor**
+- **Topics page:** your topics (subject, grade, terms, "N to fix", status, classes), a New topic form, Duplicate and Archive. Below it, the **starter library**: any teacher can copy a published library topic into a draft of their own.
+- **Topic editor:** title, subject, grade, curriculum code; the terms in play order (drag a row, or use the ↑ ↓ buttons, which work from the keyboard); Publish. Publishing checks every term and publishes the drafts with the topic.
+- **Term editor:** every field in the table below except the picture upload, highlight drawing, phone preview, "Test with my voice" and pronunciation, which come in steps 3–4. The display name and syllables are suggested from the answer (`suggestSyllables`). The left column shows the picture (starter diagrams render with their highlight) and the live **Ready to publish?** checklist.
+- **Confusable suggestions:** a yellow "Students might mix it up with" box lists terms from the same topic and the library in that subject that sound alike, are spelled alike, share an ending, or already list this answer. Ticking one adds it to "Never accept" with editable feedback.
+- **One set of rules:** `@blurt/shared/authoring` (`termChecks`, `suggestConfusables`, `suggestSyllables`) runs in the dashboard for the live checklist and in the API, which refuses to publish anything that fails.
+- **Versions:** saving a published term must keep it ready, and bumps its version when anything changed. Each round stores a snapshot of its terms (`Round.terms`), so rounds in progress keep the old version.
+- **Deleting:** a draft term is deleted. A published term is archived (hidden, but kept for past results). Topics are only ever archived; an archived topic is read-only, and Duplicate brings it back as a draft.
+- **Clue check:** a clue that contains the answer gets a warning (not a blocker).
+- **Library terms** (the starter set) may publish without a picture; teachers' terms need one.
+- Code: `apps/dashboard/src/features/topics/`, `apps/api/src/teacher/`.
+
 
 1. **Sign in** (Supabase Auth, same accounts as the app).
 2. **Overview**: my classes, recent activity, terms students miss most this week.

@@ -151,7 +151,7 @@ model Term {
   pictureId  String?          // optional: starter library terms may have none; teachers must add one to publish
   picture    Picture? @relation(fields: [pictureId], references: [id])
   /// Highlight box as fractions of the picture: { "shape": "ellipse"|"rect", "x": 0.41, "y": 0.38, "w": 0.18, "h": 0.2 }
-  highlight  Json
+  highlight  Json?             // null until the teacher marks the part to name
   difficulty Int      @default(1)
   status     Status   @default(DRAFT)
   version    Int      @default(1)
@@ -184,6 +184,7 @@ model Round {
   topicId   String?            // null for practice rounds (specific terms)
   classId   String?            // set when played as a class assignment
   termIds   String[]           // the terms served, in order
+  terms     Json?              // snapshot of those terms as served, so edits mid-round don't change them
   status    RoundStatus @default(ACTIVE)
   lives     Int      @default(3)
   hintsUsed Int      @default(0)

@@ -37,6 +37,17 @@ async function rejects(p: Promise<unknown>, status: number, code?: string) {
 }
 
 describe('RoundsService', () => {
+  it("a teacher's edit mid-round doesn't change the round in progress (term versions)", async () => {
+    const { service, repo } = setup();
+    const r = await service.start(me, { topicId: 'atoms-and-ions' });
+    // The term changes after the round started: "proton" is no longer accepted.
+    const edited = (await repo.termsByIds(['chem-proton']))[0]!;
+    repo.termsByIds = async () => [{ ...edited, version: 2, canonical: 'positron', accept: [] }];
+    const res = await service.attempt(me, r.roundId, say('chem-proton', 'proton'));
+    expect(res.verdict).toBe('correct');
+    expect(repo.attempts.get([...repo.attempts.keys()].at(-1)!)?.termVersion).toBe(1);
+  });
+
   describe('start', () => {
     it('serves a topic with answers, picture data and the round budgets', async () => {
       const { service } = setup();

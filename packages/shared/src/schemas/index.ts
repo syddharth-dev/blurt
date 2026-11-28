@@ -217,6 +217,162 @@ export type InviteResult = z.infer<typeof InviteResult>;
 export const StaffList = z.object({ staff: z.array(StaffMember) });
 export type StaffList = z.infer<typeof StaffList>;
 
+// ── /teacher ─────────────────────────────────────────────────────────────────
+
+export const Status = z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']);
+export type Status = z.infer<typeof Status>;
+
+const line = (max: number) => z.string().trim().max(max);
+
+export const SubjectOption = z.object({ id: z.string(), name: z.string(), color: z.string() });
+export type SubjectOption = z.infer<typeof SubjectOption>;
+export const SubjectList = z.object({ subjects: z.array(SubjectOption) });
+export type SubjectList = z.infer<typeof SubjectList>;
+
+export const CreateTopic = z
+  .object({
+    title: line(80).min(1),
+    subjectId: z.string().min(1),
+    grade: z.number().int().min(6).max(12),
+    curriculumCode: line(40).optional(),
+  })
+  .strict();
+export type CreateTopic = z.infer<typeof CreateTopic>;
+
+export const UpdateTopic = CreateTopic.partial().strict();
+export type UpdateTopic = z.infer<typeof UpdateTopic>;
+
+/** What the teacher types for a term. Drafts may leave clue and fact blank. */
+export const TermDraft = z
+  .object({
+    canonical: line(60).min(1),
+    /** Blank → the answer with a capital letter */
+    display: line(60).optional(),
+    /** Blank → suggested from the answer */
+    syllables: line(80).optional(),
+    clue: line(200).default(''),
+    fact: line(280).default(''),
+    accept: z.array(line(60).min(1)).max(20).default([]),
+    close: z
+      .array(z.object({ text: line(60).min(1), reason: line(120).min(1) }).strict())
+      .max(20)
+      .default([]),
+    confusables: z
+      .array(z.object({ text: line(60).min(1), feedback: line(160).min(1) }).strict())
+      .max(20)
+      .default([]),
+    difficulty: z.number().int().min(1).max(3).default(1),
+    pictureId: z.string().min(1).nullable().optional(),
+    highlight: Highlight.nullable().optional(),
+  })
+  .strict();
+export type TermDraft = z.input<typeof TermDraft>;
+
+/** POST /teacher/topics/:id/terms: a new term, saved as a draft (or published if `publish`). */
+export const CreateTerm = TermDraft.extend({ publish: z.boolean().optional() }).strict();
+export type CreateTerm = z.input<typeof CreateTerm>;
+
+/** PATCH /teacher/terms/:id. `publish: true` checks the term and publishes it. */
+export const UpdateTerm = z
+  .object({
+    ...TermDraft.shape,
+    canonical: line(60).min(1).optional(),
+    clue: line(200).optional(),
+    fact: line(280).optional(),
+    accept: TermDraft.shape.accept.unwrap().optional(),
+    close: TermDraft.shape.close.unwrap().optional(),
+    confusables: TermDraft.shape.confusables.unwrap().optional(),
+    difficulty: TermDraft.shape.difficulty.unwrap().optional(),
+    publish: z.boolean().optional(),
+  })
+  .strict();
+export type UpdateTerm = z.input<typeof UpdateTerm>;
+
+export const ReorderTerms = z.object({ termIds: z.array(z.string().min(1)).max(200) }).strict();
+export type ReorderTerms = z.infer<typeof ReorderTerms>;
+
+export const TeacherPicture = z.object({
+  id: z.string(),
+  diagram: z.string().nullable(),
+  url: z.string().nullable(),
+  thumbUrl: z.string().nullable(),
+  state: z.enum(['UPLOADING', 'PROCESSING', 'READY', 'FAILED']),
+  altText: z.string().nullable(),
+});
+export type TeacherPicture = z.infer<typeof TeacherPicture>;
+
+export const TeacherTerm = z.object({
+  id: z.string(),
+  topicId: z.string(),
+  position: z.number().int(),
+  status: Status,
+  version: z.number().int(),
+  canonical: z.string(),
+  display: z.string(),
+  syllables: z.string(),
+  clue: z.string(),
+  fact: z.string(),
+  accept: z.array(z.string()),
+  close: z.array(z.object({ text: z.string(), reason: z.string() })),
+  confusables: z.array(z.object({ text: z.string(), feedback: z.string() })),
+  difficulty: z.number().int(),
+  picture: TeacherPicture.nullable(),
+  highlight: Highlight.nullable(),
+  /** From termChecks in @blurt/shared/authoring: problems block publishing. */
+  problems: z.array(z.string()),
+  warnings: z.array(z.string()),
+  updatedAt: z.string(),
+});
+export type TeacherTerm = z.infer<typeof TeacherTerm>;
+
+export const TeacherTopicSummary = z.object({
+  id: z.string(),
+  title: z.string(),
+  subject: SubjectOption,
+  grade: z.number().int(),
+  curriculumCode: z.string().nullable(),
+  status: Status,
+  termCount: z.number().int(),
+  /** Terms with problems that block publishing */
+  termsNotReady: z.number().int(),
+  /** Class names it's assigned to (Phase 4 step 5) */
+  classes: z.array(z.string()),
+  updatedAt: z.string(),
+});
+export type TeacherTopicSummary = z.infer<typeof TeacherTopicSummary>;
+
+export const TeacherTopicList = z.object({ topics: z.array(TeacherTopicSummary) });
+export type TeacherTopicList = z.infer<typeof TeacherTopicList>;
+
+export const TeacherTopicDetail = TeacherTopicSummary.extend({
+  /** Starter library topics may publish terms without pictures */
+  library: z.boolean(),
+  terms: z.array(TeacherTerm),
+});
+export type TeacherTopicDetail = z.infer<typeof TeacherTopicDetail>;
+
+export const ConfusableSuggestionsRequest = z
+  .object({
+    answer: line(60).min(1),
+    topicId: z.string().min(1),
+    /** The term being edited, left out of its own suggestions */
+    termId: z.string().min(1).optional(),
+  })
+  .strict();
+export type ConfusableSuggestionsRequest = z.infer<typeof ConfusableSuggestionsRequest>;
+
+export const ConfusableSuggestions = z.object({
+  suggestions: z.array(
+    z.object({
+      text: z.string(),
+      display: z.string(),
+      feedback: z.string(),
+      why: z.enum(['listed', 'sounds-alike', 'similar-spelling', 'same-ending']),
+    }),
+  ),
+});
+export type ConfusableSuggestions = z.infer<typeof ConfusableSuggestions>;
+
 // ── Errors and health ────────────────────────────────────────────────────────
 
 /** Every error response uses this one shape. */
@@ -236,6 +392,8 @@ export const ERROR_CODES = {
   termNotInRound: 'TERM_NOT_IN_ROUND',
   termDone: 'TERM_DONE',
   topicLocked: 'TOPIC_LOCKED',
+  /** Publishing (or saving a published term) failed the publish checks */
+  notReady: 'NOT_READY',
 } as const;
 
 export const HealthResponse = z.object({ ok: z.literal(true) });

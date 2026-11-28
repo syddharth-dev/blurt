@@ -7,8 +7,14 @@ import { AuthAdmin } from '../src/auth/auth-admin.js';
 import { JwtVerifier } from '../src/auth/jwt-verifier.js';
 import { ContentRepository } from '../src/content/content.repository.js';
 import { RoundsRepository } from '../src/gameplay/rounds.repository.js';
+import { TeacherContentRepository } from '../src/teacher/teacher-content.repository.js';
 import { UsersRepository } from '../src/users/users.repository.js';
-import { FakeContentRepository, FakeRoundsRepository, FakeUsersRepository } from './fakes.js';
+import {
+  FakeContentRepository,
+  FakeRoundsRepository,
+  FakeTeacherContentRepository,
+  FakeUsersRepository,
+} from './fakes.js';
 
 /** Tokens in these tests are just user ids; the real verifier checks Supabase JWKS. */
 const fakeVerifier = {
@@ -34,6 +40,8 @@ describe('API (e2e, in-memory data)', () => {
       .useValue(rounds)
       .overrideProvider(ContentRepository)
       .useValue(new FakeContentRepository())
+      .overrideProvider(TeacherContentRepository)
+      .useValue(new FakeTeacherContentRepository())
       .overrideProvider(AuthAdmin)
       .useValue({ invite: async () => ({ id: 'invited-1' }), findIdByEmail: async () => null })
       .compile();
@@ -219,6 +227,79 @@ describe('API (e2e, in-memory data)', () => {
         .post('/v1/admin/teachers/invite')
         .set(as('adm-1'))
         .send({ email: 'not-an-email' })
+        .expect(400));
+  });
+
+  describe('teacher routes (AGENTS.md rule 9)', () => {
+    const http = () => request(app.getHttpServer());
+    let topicId = '';
+    let termId = '';
+
+    beforeAll(async () => {
+      await users.create({ id: 'tea-a', name: 'A', email: 'tea-a@school.test', role: 'TEACHER' });
+      await users.create({ id: 'tea-b', name: 'B', email: 'tea-b@school.test', role: 'TEACHER' });
+    });
+
+    it('a student gets 403', () => http().get('/v1/teacher/topics').set(as('stu-2')).expect(403));
+
+    it('a teacher creates a topic and a draft term', async () => {
+      const topic = await http()
+        .post('/v1/teacher/topics')
+        .set(as('tea-a'))
+        .send({ title: 'Atoms', subjectId: 'chemistry', grade: 8 })
+        .expect(201);
+      topicId = topic.body.id;
+      const term = await http()
+        .post(`/v1/teacher/topics/${topicId}/terms`)
+        .set(as('tea-a'))
+        .send({ canonical: 'proton' })
+        .expect(201);
+      termId = term.body.id;
+      expect(term.body).toMatchObject({ status: 'DRAFT', display: 'Proton' });
+    });
+
+    // Paths and bodies are functions: the ids exist only after the test above runs.
+    type Route = [
+      'get' | 'post' | 'patch' | 'put' | 'delete',
+      () => string,
+      () => object | undefined,
+    ];
+    it.each<Route>([
+      ['get', () => `/v1/teacher/topics/${topicId}`, () => undefined],
+      ['patch', () => `/v1/teacher/topics/${topicId}`, () => ({ title: 'Mine' })],
+      ['delete', () => `/v1/teacher/topics/${topicId}`, () => undefined],
+      ['post', () => `/v1/teacher/topics/${topicId}/duplicate`, () => undefined],
+      ['post', () => `/v1/teacher/topics/${topicId}/publish`, () => undefined],
+      ['put', () => `/v1/teacher/topics/${topicId}/terms/order`, () => ({ termIds: [termId] })],
+      ['post', () => `/v1/teacher/topics/${topicId}/terms`, () => ({ canonical: 'neutron' })],
+      ['get', () => `/v1/teacher/terms/${termId}`, () => undefined],
+      ['patch', () => `/v1/teacher/terms/${termId}`, () => ({ clue: 'Mine' })],
+      ['delete', () => `/v1/teacher/terms/${termId}`, () => undefined],
+      [
+        'post',
+        () => '/v1/teacher/terms/confusable-suggestions',
+        () => ({ answer: 'proton', topicId }),
+      ],
+    ])('another teacher gets 403: %s', async (method, path, body) => {
+      const req = http()[method](path()).set(as('tea-b'));
+      const payload = body();
+      const res = await (payload ? req.send(payload) : req).expect(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+    });
+
+    it('publishing an unfinished topic is 422 NOT_READY', async () => {
+      const res = await http()
+        .post(`/v1/teacher/topics/${topicId}/publish`)
+        .set(as('tea-a'))
+        .expect(422);
+      expect(res.body.error.code).toBe('NOT_READY');
+    });
+
+    it('rejects a bad term body with 400', () =>
+      http()
+        .post(`/v1/teacher/topics/${topicId}/terms`)
+        .set(as('tea-a'))
+        .send({ canonical: '', difficulty: 9 })
         .expect(400));
   });
 });
