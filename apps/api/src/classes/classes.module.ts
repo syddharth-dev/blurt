@@ -20,5 +20,6 @@ import { ClassesService } from './classes.service.js';
     },
     { provide: ClassesRepository, useClass: PrismaClassesRepository },
   ],
+  exports: [ClassesService, ClassesRepository],
 })
 export class ClassesModule {}

@@ -65,8 +65,19 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 - **Join codes** are 6 characters without look-alikes (no 0/O, 1/I/L), typed in any case. Joining is limited to 10 tries a minute so codes can't be guessed.
 - **Students** join in the app (Topics → "Join a class"). They then see the class's published topics first on the Topics tab, soonest due date first, and those topics are never locked by level. Uploaded pictures show in the app with the highlight drawn on top.
 - The Topics list shows which classes each topic is assigned to.
-- Reports per class come in Phase 5.
+- Reports per class: see Phase 5 step 1 below.
 - Code: `apps/dashboard/src/features/classes/`, `apps/api/src/classes/`.
+
+**Built (Phase 5, step 1): reports and the Overview**
+- **Overview** (`/`): each class this week (students who played, rounds, accuracy), this week's most-missed terms across your classes, and the latest finished rounds.
+- **Reports** (sidebar) lists your classes. Each **class report** (`/classes/:id/report`, also "See report" on the class page) has a 7-day / 30-day / all-time switch:
+  - tiles for accuracy, active students, rounds and answers;
+  - the 10 **most-missed terms**, with what students said instead (text only, normalized, counted);
+  - the students, weakest first, with accuracy, rounds, "to practise" (terms whose latest try wasn't right) and when they last played.
+- Click a student for their **student report**: every term they've tried in the class's topics, weakest first, with what they said.
+- **What counts:** answers by students in the class, on terms from topics assigned to it, in any kind of round (topic, practice or daily). Answers are spoken or typed tries; skips count as misses but not as answers. Accuracy = right ÷ answers.
+- Bars use one colour (violet), and each bar's value is also shown as text.
+- Code: `apps/dashboard/src/features/reports/`, `apps/api/src/reports/` (the maths is the pure `build-report.ts`).
 
 
 1. **Sign in** (Supabase Auth, same accounts as the app).

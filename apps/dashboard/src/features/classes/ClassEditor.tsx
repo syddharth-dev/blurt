@@ -22,7 +22,15 @@ export function ClassEditor({ classId }: { classId: string }) {
       <Link href="/classes" className="self-start font-bold text-violet hover:underline">
         ← Classes
       </Link>
-      <h1 className="font-display text-4xl text-night">{c.data.name}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-s12">
+        <h1 className="font-display text-4xl text-night">{c.data.name}</h1>
+        <Link
+          href={`/classes/${c.data.id}/report`}
+          className="inline-flex min-h-11 items-center rounded-button bg-violet px-s20 font-display text-base text-white hover:bg-violet-ink"
+        >
+          See report
+        </Link>
+      </div>
       <div className="grid gap-s20 md:grid-cols-2">
         <JoinCode c={c.data} />
         <Rename key={c.data.name} c={c.data} />

@@ -130,6 +130,11 @@ export class ClassesService {
 
   // ── helpers ────────────────────────────────────────────────────────────────
 
+  /** The class, if this user teaches it (or is an admin). 404 if missing, 403 otherwise. */
+  access(auth: AuthUser, id: string) {
+    return this.ownClass(auth, id);
+  }
+
   private async ownClass(auth: AuthUser, id: string) {
     const c = await this.repo.find(id);
     if (!c) throw this.notFound();

@@ -5,6 +5,7 @@ import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { AuthAdmin } from '../src/auth/auth-admin.js';
 import { ClassesRepository } from '../src/classes/classes.repository.js';
+import { ReportsRepository } from '../src/reports/reports.repository.js';
 import { JwtVerifier } from '../src/auth/jwt-verifier.js';
 import { ContentRepository } from '../src/content/content.repository.js';
 import { RoundsRepository } from '../src/gameplay/rounds.repository.js';
@@ -15,6 +16,7 @@ import { UsersRepository } from '../src/users/users.repository.js';
 import {
   FakeClassesRepository,
   FakeContentRepository,
+  FakeReportsRepository,
   FakePictureStorage,
   FakePicturesRepository,
   FakeRoundsRepository,
@@ -55,6 +57,8 @@ describe('API (e2e, in-memory data)', () => {
       .useValue(new FakePictureStorage())
       .overrideProvider(ClassesRepository)
       .useValue(classes)
+      .overrideProvider(ReportsRepository)
+      .useValue(new FakeReportsRepository())
       .overrideProvider(AuthAdmin)
       .useValue({ invite: async () => ({ id: 'invited-1' }), findIdByEmail: async () => null })
       .compile();
@@ -471,6 +475,26 @@ describe('API (e2e, in-memory data)', () => {
       });
       const mine = await http().get('/v1/classes').set(as('stu-c')).expect(200);
       expect(mine.body.classes).toHaveLength(1);
+    });
+
+    it('reports: the teacher sees them; another teacher gets 403; a bad range is 400', async () => {
+      const ok = await http()
+        .get(`/v1/teacher/classes/${classId}/report?range=30d`)
+        .set(as('tea-c1'))
+        .expect(200);
+      expect(ok.body).toMatchObject({ range: '30d', summary: { students: 0 } });
+      await http().get(`/v1/teacher/classes/${classId}/report`).set(as('tea-c2')).expect(403);
+      await http()
+        .get(`/v1/teacher/classes/${classId}/students/stu-c/report`)
+        .set(as('tea-c2'))
+        .expect(403);
+      await http()
+        .get(`/v1/teacher/classes/${classId}/report?range=forever`)
+        .set(as('tea-c1'))
+        .expect(400);
+      const overview = await http().get('/v1/teacher/overview').set(as('tea-c1')).expect(200);
+      expect(overview.body.classes).toEqual([expect.objectContaining({ name: 'Rizal' })]);
+      await http().get('/v1/teacher/overview').set(as('stu-c')).expect(403);
     });
 
     it('a bad code is 400 (shape) or 404 (no such class)', async () => {

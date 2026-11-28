@@ -23,6 +23,8 @@ import {
 import { PictureStorage } from '../src/media/picture-storage.js';
 import { PicturesRepository, type PictureRecord } from '../src/media/pictures.repository.js';
 import type { UserProgressPatch } from '../src/progress/progress.service.js';
+import type { AttemptRow, StudentMeta, TermMeta } from '../src/reports/build-report.js';
+import { ReportsRepository, type FinishedRound } from '../src/reports/reports.repository.js';
 import {
   TeacherContentRepository,
   type TermData,
@@ -598,5 +600,37 @@ export class FakeClassesRepository extends ClassesRepository {
           }),
       })),
     );
+  }
+}
+
+// ── Reports ─────────────────────────────────────────────────────────────────
+
+export class FakeReportsRepository extends ReportsRepository {
+  studentsByClass = new Map<string, StudentMeta[]>();
+  termsByClass = new Map<string, TermMeta[]>();
+  topicsByClass = new Map<string, string[]>();
+  rows: AttemptRow[] = [];
+  rounds: FinishedRound[] = [];
+  async students(classId: string) {
+    return this.studentsByClass.get(classId) ?? [];
+  }
+  async terms(classId: string) {
+    return this.termsByClass.get(classId) ?? [];
+  }
+  async attempts(q: { studentIds: string[]; termIds: string[]; since: Date | null }) {
+    return this.rows.filter(
+      (r) =>
+        q.studentIds.includes(r.studentId) &&
+        q.termIds.includes(r.termId) &&
+        (!q.since || r.createdAt >= q.since),
+    );
+  }
+  async finishedRounds(q: { studentIds: string[]; topicIds: string[]; limit: number }) {
+    return this.rounds
+      .filter((r) => q.studentIds.includes(r.studentId) && q.topicIds.includes(r.topicId))
+      .slice(0, q.limit);
+  }
+  async topicIds(classId: string) {
+    return this.topicsByClass.get(classId) ?? [];
   }
 }

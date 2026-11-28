@@ -286,7 +286,9 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | PATCH | `/teacher/classes/:id` | Rename (`name`), regenerate code (`newCode: true`) |
 | PUT | `/teacher/classes/:id/topics` | `{topics: [{topicId, dueOn}]}`: the full list of assigned topics |
 | DELETE | `/teacher/classes/:id/students/:studentId` | Remove a student |
-| GET | `/teacher/classes/:id/report` | Accuracy, most-missed terms, what was heard |
+| GET | `/teacher/classes/:id/report` | `?range=7d\|30d\|all`: accuracy, most-missed terms, what was heard, students |
+| GET | `/teacher/classes/:id/students/:studentId/report` | One student's terms in the class's topics, weakest first |
+| GET | `/teacher/overview` | Your classes this week, recent rounds, most-missed terms |
 
 ### Admin
 | Method | Route | Purpose |
@@ -342,3 +344,8 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **Join codes:** 6 characters from `CLASS_CODE_ALPHABET` (no 0/O, 1/I/L), unique, made with `crypto.randomInt` and retried on the rare clash. A wrong code is 404 `CLASS_NOT_FOUND`. Joining twice is fine (`alreadyMember: true`).
 - **Assigning:** your own topics or published library topics (another teacher's: 403). Students only see published ones. Due dates are days (`dueOn`, "YYYY-MM-DD"), stored at noon UTC so no time zone moves them.
 - **Pictures in rounds:** `RoundPicture` now carries `width` and `height`, and `url` only once the picture is `READY`. The app fits the picture inside the panel and places the highlight on the picture's own area.
+
+### Built in Phase 5 step 1 (decisions)
+- **Report scope:** attempts by students enrolled in the class, on terms (any status) from topics assigned to it, in any kind of round. Answers = attempts with verdict correct, close or wrong; misses = close + wrong + skipped; accuracy = correct ÷ answers (null without answers). "What they said" is the recognizer's first alternative (or the typed text), normalized like the matcher does, counted, top 5.
+- **Access:** only the class's teacher or an admin (`ClassesService.access`): another teacher gets 403, a student who isn't in the class 404 (tested). Ranges are `7d` (default), `30d` and `all`; anything else is 400.
+- The numbers are computed in the API from the attempt rows (`build-report.ts`). That's fine for classes of this size. If it gets slow, add a daily summary table.

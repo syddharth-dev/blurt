@@ -10,7 +10,7 @@ const ITEMS: Item[] = [
   { href: '/', label: 'Overview' },
   { href: '/topics', label: 'Topics' },
   { href: '/classes', label: 'Classes' },
-  { href: '/reports', label: 'Reports', soon: 'Phase 5' },
+  { href: '/reports', label: 'Reports' },
   { href: '/teachers', label: 'Teachers', roles: ['ADMIN'] },
 ];
 

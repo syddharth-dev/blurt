@@ -541,6 +541,104 @@ export const TeacherClassDetail = TeacherClassSummary.extend({
 });
 export type TeacherClassDetail = z.infer<typeof TeacherClassDetail>;
 
+// ── Reports (teachers) ───────────────────────────────────────────────────────
+
+/** How far back a report looks. */
+export const ReportRange = z.enum(['7d', '30d', 'all']);
+export type ReportRange = z.infer<typeof ReportRange>;
+
+/**
+ * Definitions (TEACHER_DASHBOARD.md → Reports):
+ * - answers: spoken or typed attempts (skips aren't answers);
+ * - accuracy: right answers ÷ answers, null when there are none;
+ * - misses: close + wrong answers + skips.
+ */
+const Accuracy = z.number().min(0).max(1).nullable();
+
+export const MissedTerm = z.object({
+  termId: z.string(),
+  display: z.string(),
+  topic: z.string(),
+  answers: z.number().int(),
+  correct: z.number().int(),
+  misses: z.number().int(),
+  accuracy: Accuracy,
+  /** What students said instead, most common first (text only) */
+  heard: z.array(z.object({ text: z.string(), count: z.number().int() })),
+});
+export type MissedTerm = z.infer<typeof MissedTerm>;
+
+export const ClassReport = z.object({
+  range: ReportRange,
+  /** Start of the range, or null for all time */
+  since: z.string().nullable(),
+  summary: z.object({
+    students: z.number().int(),
+    activeStudents: z.number().int(),
+    rounds: z.number().int(),
+    answers: z.number().int(),
+    accuracy: Accuracy,
+  }),
+  /** Most misses first, at most 10 */
+  missedTerms: z.array(MissedTerm),
+  students: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      rounds: z.number().int(),
+      answers: z.number().int(),
+      accuracy: Accuracy,
+      lastPlayedAt: z.string().nullable(),
+      /** Terms whose latest try wasn't right */
+      toPractise: z.number().int(),
+    }),
+  ),
+});
+export type ClassReport = z.infer<typeof ClassReport>;
+
+export const StudentReport = z.object({
+  range: ReportRange,
+  since: z.string().nullable(),
+  student: z.object({ id: z.string(), name: z.string() }),
+  className: z.string(),
+  summary: z.object({
+    rounds: z.number().int(),
+    answers: z.number().int(),
+    accuracy: Accuracy,
+    lastPlayedAt: z.string().nullable(),
+  }),
+  /** Every term they've tried in the class's topics, weakest first */
+  terms: z.array(MissedTerm),
+});
+export type StudentReport = z.infer<typeof StudentReport>;
+
+export const TeacherOverview = z.object({
+  classes: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      studentCount: z.number().int(),
+      activeThisWeek: z.number().int(),
+      roundsThisWeek: z.number().int(),
+      accuracyThisWeek: Accuracy,
+    }),
+  ),
+  /** Latest finished rounds in your classes' topics */
+  recent: z.array(
+    z.object({
+      studentName: z.string(),
+      className: z.string(),
+      topic: z.string(),
+      correct: z.number().int(),
+      total: z.number().int(),
+      finishedAt: z.string(),
+    }),
+  ),
+  /** This week's most-missed terms across your classes, at most 5 */
+  missedThisWeek: z.array(MissedTerm.extend({ className: z.string() })),
+});
+export type TeacherOverview = z.infer<typeof TeacherOverview>;
+
 // ── Errors and health ────────────────────────────────────────────────────────
 
 /** Every error response uses this one shape. */
