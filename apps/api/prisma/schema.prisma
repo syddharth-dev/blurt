@@ -72,8 +72,9 @@ model Class {
   id          String   @id @default(cuid())
   name        String              // "Grade 8 – Rizal"
   code        String   @unique    // 6-char join code, e.g. "K7Q2MX"
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
+  schoolId    String?            // optional until schools are set up (admin reference data)
+  school      School?  @relation(fields: [schoolId], references: [id])
+  createdAt   DateTime @default(now())
   teacherId   String
   teacher     User     @relation("ClassTeacher", fields: [teacherId], references: [id])
   enrollments Enrollment[]

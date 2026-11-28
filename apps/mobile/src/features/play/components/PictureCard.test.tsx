@@ -1,7 +1,7 @@
 import { GRADE8_TERMS } from '@blurt/shared/content';
 import { render, screen } from '@testing-library/react-native';
 import { sizes, space } from '@/theme';
-import { badgeLayout, PictureCard } from './PictureCard';
+import { badgeLayout, fitFrame, PictureCard } from './PictureCard';
 
 const AREA = sizes.pictureCard - space.s10 * 2;
 const term = (c: string) => GRADE8_TERMS.find((t) => t.canonical === c)!;
@@ -50,5 +50,33 @@ describe('PictureCard', () => {
     const isotope = term('isotope');
     await render(<PictureCard term={isotope} solved={false} />);
     expect(screen.getByText(isotope.clue)).toBeOnTheScreen();
+  });
+});
+
+describe('uploaded pictures', () => {
+  it('fit inside the panel (contain), so the highlight lands on the picture', () => {
+    expect(fitFrame(1)).toEqual({ left: 0, top: 0, width: AREA, height: AREA });
+    expect(fitFrame(2)).toEqual({ left: 0, top: AREA / 4, width: AREA, height: AREA / 2 });
+    expect(fitFrame(0.5)).toEqual({ left: AREA / 4, top: 0, width: AREA / 2, height: AREA });
+  });
+
+  it('render the teacher’s picture with its description', async () => {
+    const base = term('nucleus');
+    await render(
+      <PictureCard
+        solved={false}
+        term={{
+          ...base,
+          picture: {
+            url: 'https://cdn.test/cell.webp',
+            width: 1600,
+            height: 800,
+            highlight: { shape: 'ellipse', x: 0.4, y: 0.4, w: 0.2, h: 0.2 },
+            altText: 'A plant cell',
+          },
+        }}
+      />,
+    );
+    expect(screen.getByRole('image').props.accessibilityLabel).toMatch(/^A plant cell\. The part/);
   });
 });

@@ -48,6 +48,7 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="play/[topicId]" />
             <Stack.Screen name="summary/[roundId]" />
+            <Stack.Screen name="join-class" />
             <Stack.Screen name="speech-lab" />
             <Stack.Screen name="pip-preview" />
           </Stack.Protected>

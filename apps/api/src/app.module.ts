@@ -3,6 +3,7 @@ import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { ClassesModule } from './classes/classes.module.js';
 import { ConfigModule } from './common/config/config.module.js';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
 import { PrismaModule } from './common/prisma/prisma.module.js';
@@ -16,7 +17,7 @@ import { UsersModule } from './users/users.module.js';
 
 /**
  * Root module of the modular monolith (docs/ARCHITECTURE.md → "API folder structure").
- * Still to come: leaderboard (Phase 5); classes (Phase 4).
+ * Still to come: leaderboard and reports (Phase 5).
  */
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { UsersModule } from './users/users.module.js';
     AdminModule,
     TeacherModule,
     MediaModule,
+    ClassesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

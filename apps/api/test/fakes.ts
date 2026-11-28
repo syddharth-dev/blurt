@@ -5,6 +5,12 @@
 import { GRADE8_TERMS, topicsOf, type ContentTerm } from '@blurt/shared/content';
 import type { PictureState, RoundTerm, TeacherPicture } from '@blurt/shared/schemas';
 import type { AuthUser } from '../src/auth/supabase-jwt.guard.js';
+import {
+  ClassesRepository,
+  CodeTaken,
+  type AssignableTopic,
+  type ClassRecord,
+} from '../src/classes/classes.repository.js';
 import { ContentRepository, type SubjectRow } from '../src/content/content.repository.js';
 import {
   RoundsRepository,
@@ -48,8 +54,10 @@ export function asRoundTerm(t: ContentTerm): RoundTerm {
     confusables: t.confusables,
     picture: t.picture
       ? {
-          diagram: t.picture.diagram,
-          url: null,
+          diagram: 'diagram' in t.picture ? t.picture.diagram : null,
+          url: 'url' in t.picture ? t.picture.url : null,
+          width: null,
+          height: null,
           highlight: t.picture.highlight,
           altText: t.picture.altText,
         }
@@ -96,6 +104,8 @@ export class FakeUsersRepository extends UsersRepository {
 export class FakeRoundsRepository extends RoundsRepository {
   topics = topicsOf(GRADE8_TERMS);
   unlockLevels = new Map<string, number>();
+  /** topicId → student ids it's assigned to (through a class) */
+  assigned = new Map<string, Set<string>>();
   rounds = new Map<string, RoundRecord>();
   attempts = new Map<string, AttemptRecord & { roundId: string }>();
   finishes: { userId: string; progress: UserProgressPatch; mastery: MasteryDelta[] }[] = [];
@@ -104,7 +114,7 @@ export class FakeRoundsRepository extends RoundsRepository {
   }
   private nextId = 1;
 
-  async topicTerms(topicId: string): Promise<TopicTerms | null> {
+  async topicTerms(topicId: string, userId: string): Promise<TopicTerms | null> {
     const t = this.topics.find((x) => x.id === topicId);
     if (!t) return null;
     return {
@@ -113,6 +123,7 @@ export class FakeRoundsRepository extends RoundsRepository {
         title: t.title,
         subject: t.subject,
         unlockLevel: this.unlockLevels.get(t.id) ?? 1,
+        assigned: this.assigned.get(t.id)?.has(userId) ?? false,
       },
       terms: t.terms.map(asRoundTerm),
     };
@@ -186,6 +197,7 @@ export class FakeContentRepository extends ContentRepository {
         grade: 8,
         unlockLevel: this.unlockLevels.get(t.id) ?? 1,
         termCount: t.terms.length,
+        assigned: false,
       });
       bySubject.set(id, s);
     }
@@ -465,5 +477,126 @@ export class FakePictureStorage extends PictureStorage {
   async putPublic(path: string, data: Buffer) {
     this.public.set(path, data);
     return `https://cdn.test/${path}`;
+  }
+}
+
+// ── Classes ─────────────────────────────────────────────────────────────────
+
+export class FakeClassesRepository extends ClassesRepository {
+  classes = new Map<string, ClassRecord & { createdAt: number }>();
+  enrollments: Array<{ classId: string; studentId: string; joinedAt: Date }> = [];
+  assignments: Array<{ classId: string; topicId: string; dueAt: Date | null }> = [];
+  /** Topics that can be assigned, with what the student list shows */
+  topics = new Map<
+    string,
+    AssignableTopic & { title: string; subject: string; color: string; termCount: number }
+  >();
+  constructor(private readonly users: FakeUsersRepository) {
+    super();
+  }
+  private nextId = 1;
+
+  async create(data: { teacherId: string; name: string; code: string }) {
+    if ([...this.classes.values()].some((c) => c.code === data.code)) throw new CodeTaken();
+    const id = `class-${this.nextId++}`;
+    this.classes.set(id, { id, ...data, createdAt: this.nextId });
+    return id;
+  }
+  async listForTeacher(teacherId: string) {
+    return [...this.classes.values()]
+      .filter((c) => c.teacherId === teacherId)
+      .map(({ createdAt: _c, ...c }) => ({
+        ...c,
+        studentCount: this.enrollments.filter((e) => e.classId === c.id).length,
+        topicCount: this.assignments.filter((a) => a.classId === c.id).length,
+      }));
+  }
+  async find(id: string) {
+    const c = this.classes.get(id);
+    if (!c) return null;
+    const { createdAt: _c, ...rest } = c;
+    return rest;
+  }
+  async detail(id: string) {
+    const c = await this.find(id);
+    if (!c) return null;
+    const students = await Promise.all(
+      this.enrollments
+        .filter((e) => e.classId === id)
+        .map(async (e) => ({
+          id: e.studentId,
+          name: (await this.users.find(e.studentId))?.name ?? '?',
+          joinedAt: e.joinedAt,
+        })),
+    );
+    const topics = this.assignments
+      .filter((a) => a.classId === id)
+      .map((a) => {
+        const t = this.topics.get(a.topicId)!;
+        return { id: t.id, title: t.title, subject: t.subject, status: t.status, dueAt: a.dueAt };
+      });
+    return { ...c, studentCount: students.length, topicCount: topics.length, students, topics };
+  }
+  async update(id: string, data: { name?: string; code?: string }) {
+    if (data.code && [...this.classes.values()].some((c) => c.code === data.code))
+      throw new CodeTaken();
+    Object.assign(this.classes.get(id)!, data);
+  }
+  async topicsByIds(ids: string[]) {
+    return ids.flatMap((id) => {
+      const t = this.topics.get(id);
+      return t
+        ? [{ id: t.id, ownerId: t.ownerId, status: t.status, visibility: t.visibility }]
+        : [];
+    });
+  }
+  async setTopics(classId: string, topics: Array<{ topicId: string; dueAt: Date | null }>) {
+    this.assignments = [
+      ...this.assignments.filter((a) => a.classId !== classId),
+      ...topics.map((t) => ({ classId, ...t })),
+    ];
+  }
+  async removeStudent(classId: string, studentId: string) {
+    this.enrollments = this.enrollments.filter(
+      (e) => !(e.classId === classId && e.studentId === studentId),
+    );
+  }
+  async findByCode(code: string) {
+    return (
+      (await Promise.all([...this.classes.keys()].map((id) => this.find(id)))).find(
+        (c) => c?.code === code,
+      ) ?? null
+    );
+  }
+  async enroll(classId: string, studentId: string) {
+    if (this.enrollments.some((e) => e.classId === classId && e.studentId === studentId))
+      return false;
+    this.enrollments.push({ classId, studentId, joinedAt: new Date() });
+    return true;
+  }
+  async classesForStudent(studentId: string, onlyClassId?: string) {
+    const mine = this.enrollments
+      .filter((e) => e.studentId === studentId && (!onlyClassId || e.classId === onlyClassId))
+      .map((e) => this.classes.get(e.classId)!);
+    return Promise.all(
+      mine.map(async (c) => ({
+        id: c.id,
+        name: c.name,
+        teacherName: (await this.users.find(c.teacherId))?.name ?? '?',
+        topics: this.assignments
+          .filter((a) => a.classId === c.id && this.topics.get(a.topicId)?.status === 'PUBLISHED')
+          .map((a) => {
+            const t = this.topics.get(a.topicId)!;
+            return {
+              id: t.id,
+              title: t.title,
+              subject: t.subject,
+              color: t.color,
+              termCount: t.termCount,
+              dueAt: a.dueAt,
+            };
+          }),
+      })),
+    );
   }
 }

@@ -24,7 +24,14 @@ const serverTerm = {
   accept: proton.accept,
   close: proton.close,
   confusables: proton.confusables,
-  picture: { diagram: 'atom', url: null, highlight: proton.picture!.highlight, altText: 'An atom' },
+  picture: {
+    diagram: 'atom',
+    url: null,
+    width: 200,
+    height: 200,
+    highlight: proton.picture!.highlight,
+    altText: 'An atom',
+  },
 };
 const started: RoundStarted = {
   roundId: 'r-1',
@@ -38,7 +45,7 @@ const started: RoundStarted = {
 describe('roundSource', () => {
   afterEach(() => mockStartRound.mockReset());
 
-  it('maps server terms, keeping the bundled diagram and highlight', () => {
+  it('maps server terms: a bundled diagram, or an uploaded picture with its size', () => {
     const t = toContentTerm(serverTerm);
     expect(t).toMatchObject({
       id: 'chem-proton',
@@ -48,9 +55,22 @@ describe('roundSource', () => {
     expect(
       toContentTerm({
         ...serverTerm,
-        picture: { ...serverTerm.picture, diagram: null, url: 'https://x/y.webp' },
+        picture: {
+          ...serverTerm.picture!,
+          diagram: null,
+          url: 'https://x/y.webp',
+          width: 1600,
+          height: 800,
+        },
       }).picture,
-    ).toBeUndefined();
+    ).toEqual({
+      url: 'https://x/y.webp',
+      width: 1600,
+      height: 800,
+      highlight: proton.picture!.highlight,
+      altText: 'An atom',
+    });
+    expect(toContentTerm({ ...serverTerm, picture: null }).picture).toBeUndefined();
   });
 
   it('online: starts the round on the server', async () => {
@@ -93,5 +113,13 @@ describe('roundSource', () => {
     const load = await loadRound('ecosystems', undefined, false);
     expect(mockStartRound).not.toHaveBeenCalled();
     expect(load).toMatchObject({ status: 'ready', round: { roundId: null } });
+  });
+
+  it('offline, a class topic (not bundled) says it needs a connection', async () => {
+    mockStartRound.mockRejectedValue(new ApiRequestError('offline', 0, 'OFFLINE', true));
+    expect(await loadRound('teacher-topic-123', undefined, true)).toEqual({
+      status: 'error',
+      message: "You're offline. Topics from your class need a connection.",
+    });
   });
 });

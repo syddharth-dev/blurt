@@ -20,6 +20,16 @@ export type LocalPicture = {
   altText: string;
 };
 
+/** A teacher's uploaded picture (processed WebP on the CDN), drawn with the same highlight. */
+export type UploadedPicture = {
+  url: string;
+  /** Pixel size, to fit the picture and place the highlight; null if unknown (shown square). */
+  width: number | null;
+  height: number | null;
+  highlight: LocalPicture['highlight'];
+  altText: string;
+};
+
 /** A term as bundled locally (ROADMAP Phases 1–2). Mirrors the Term model in DATA_AND_API.md. */
 export type ContentTerm = MatchableTerm & {
   id: string;
@@ -35,5 +45,5 @@ export type ContentTerm = MatchableTerm & {
   fact: string;
   difficulty: 1 | 2 | 3;
   /** Optional until every term has a picture; without one, the card shows the clue. */
-  picture?: LocalPicture;
+  picture?: LocalPicture | UploadedPicture;
 };

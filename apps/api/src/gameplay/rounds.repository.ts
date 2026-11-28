@@ -2,10 +2,18 @@ import { Injectable } from '@nestjs/common';
 import type { Highlight, RoundSummaryResponse, RoundTerm } from '@blurt/shared/schemas';
 import { PrismaService } from '../common/prisma/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
+import { visibleTopic } from '../common/visibility.js';
 import type { UserProgressPatch } from '../progress/progress.service.js';
 
 export type TopicTerms = {
-  topic: { id: string; title: string; subject: string; unlockLevel: number };
+  topic: {
+    id: string;
+    title: string;
+    subject: string;
+    unlockLevel: number;
+    /** Assigned to one of this student's classes: never locked by level. */
+    assigned: boolean;
+  };
   terms: RoundTerm[];
 };
 
@@ -48,10 +56,13 @@ export type RoundPatch = Partial<
 export type MasteryDelta = { termId: string; correct: number; missed: number };
 
 export abstract class RoundsRepository {
-  /** Published terms of a published, visible topic, in order. Null if not visible. */
-  abstract topicTerms(topicId: string): Promise<TopicTerms | null>;
-  /** Published, visible terms by id (practice). Unknown ids are left out. */
-  abstract termsByIds(ids: string[]): Promise<RoundTerm[]>;
+  /**
+   * Published terms of a published topic this student can see (the shared library, or assigned
+   * to one of their classes), in order. Null if not visible.
+   */
+  abstract topicTerms(topicId: string, userId: string): Promise<TopicTerms | null>;
+  /** Published terms this student can see, by id (practice). Unknown ids are left out. */
+  abstract termsByIds(ids: string[], userId: string): Promise<RoundTerm[]>;
   abstract createRound(data: {
     userId: string;
     topicId: string | null;
@@ -85,12 +96,6 @@ const termInclude = {
 
 type TermRow = Prisma.TermGetPayload<{ include: typeof termInclude }>;
 
-/** Terms students may play: published, in a published library topic (class topics: Phase 4). */
-const visibleTerm = {
-  status: 'PUBLISHED',
-  topic: { status: 'PUBLISHED', visibility: 'LIBRARY' },
-} satisfies Prisma.TermWhereInput;
-
 export function toRoundTerm(t: TermRow): RoundTerm {
   const highlight = t.highlight as Highlight | null;
   return {
@@ -114,7 +119,9 @@ export function toRoundTerm(t: TermRow): RoundTerm {
       t.picture && highlight && 'shape' in highlight
         ? {
             diagram: t.picture.diagram,
-            url: t.picture.url,
+            url: t.picture.state === 'READY' ? t.picture.url : null,
+            width: t.picture.width,
+            height: t.picture.height,
             highlight,
             altText: t.picture.altText ?? '',
           }
@@ -164,11 +171,12 @@ export class PrismaRoundsRepository extends RoundsRepository {
     super();
   }
 
-  async topicTerms(topicId: string): Promise<TopicTerms | null> {
+  async topicTerms(topicId: string, userId: string): Promise<TopicTerms | null> {
     const topic = await this.db.topic.findFirst({
-      where: { id: topicId, status: 'PUBLISHED', visibility: 'LIBRARY' },
+      where: { id: topicId, ...visibleTopic(userId) },
       include: {
         subject: true,
+        classes: { where: { class: { enrollments: { some: { studentId: userId } } } }, take: 1 },
         terms: {
           where: { status: 'PUBLISHED' },
           orderBy: { position: 'asc' },
@@ -183,14 +191,15 @@ export class PrismaRoundsRepository extends RoundsRepository {
         title: topic.title,
         subject: topic.subject.name,
         unlockLevel: topic.unlockLevel,
+        assigned: topic.classes.length > 0,
       },
       terms: topic.terms.map(toRoundTerm),
     };
   }
 
-  async termsByIds(ids: string[]): Promise<RoundTerm[]> {
+  async termsByIds(ids: string[], userId: string): Promise<RoundTerm[]> {
     const rows = await this.db.term.findMany({
-      where: { id: { in: ids }, ...visibleTerm },
+      where: { id: { in: ids }, status: 'PUBLISHED', topic: visibleTopic(userId) },
       include: termInclude,
     });
     const byId = new Map(rows.map((t) => [t.id, toRoundTerm(t)]));

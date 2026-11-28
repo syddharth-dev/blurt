@@ -55,6 +55,19 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 - **Play pronunciation** uses the browser's voice (`speechSynthesis`, en-US, a little slower).
 - Code: `apps/dashboard/src/features/topics/VoiceTest.tsx`.
 
+**Built (Phase 4, step 5): classes**
+- **Classes page:** your classes (name, join code, students, topics) and a New class form.
+- **Class page:**
+  - the **join code** in large type, with Copy and New code (the old code stops working; students already in stay in);
+  - rename;
+  - **assigned topics**: add your published topics or starter-library topics, set an optional due date, remove, then Save topics;
+  - the **roster**, with Remove (the student can rejoin with the code).
+- **Join codes** are 6 characters without look-alikes (no 0/O, 1/I/L), typed in any case. Joining is limited to 10 tries a minute so codes can't be guessed.
+- **Students** join in the app (Topics → "Join a class"). They then see the class's published topics first on the Topics tab, soonest due date first, and those topics are never locked by level. Uploaded pictures show in the app with the highlight drawn on top.
+- The Topics list shows which classes each topic is assigned to.
+- Reports per class come in Phase 5.
+- Code: `apps/dashboard/src/features/classes/`, `apps/api/src/classes/`.
+
 
 1. **Sign in** (Supabase Auth, same accounts as the app).
 2. **Overview**: my classes, recent activity, terms students miss most this week.

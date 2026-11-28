@@ -74,7 +74,7 @@ function Editor({ topic }: { topic: TeacherTopicDetail }) {
       ) : null}
       {actions.publish.isSuccess ? (
         <Notice tone="success">
-          Published. Students in the classes it’s assigned to will see it (classes arrive next).
+          Published. Assign it to a class on the Classes page and its students will see it.
         </Notice>
       ) : null}
 

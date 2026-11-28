@@ -6,7 +6,11 @@ export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
 });
 
-export const queryKeys = { me: ['me'] as const, subjects: ['subjects'] as const };
+export const queryKeys = {
+  me: ['me'] as const,
+  subjects: ['subjects'] as const,
+  classes: ['classes'] as const,
+};
 
 /** The student's profile (XP, level, streak). Undefined until signed in and loaded. */
 export function useMe() {
@@ -20,8 +24,15 @@ export function useSubjects() {
   return useQuery({ queryKey: queryKeys.subjects, queryFn: endpoints.subjects, enabled: signedIn });
 }
 
+/** The student's classes and the topics their teachers assigned (needs a connection). */
+export function useClasses() {
+  const signedIn = useAuth((s) => s.status === 'signedIn');
+  return useQuery({ queryKey: queryKeys.classes, queryFn: endpoints.classes, enabled: signedIn });
+}
+
 /** After a round, totals and mastery changed. */
 export function refreshProgress() {
   void queryClient.invalidateQueries({ queryKey: queryKeys.me });
   void queryClient.invalidateQueries({ queryKey: queryKeys.subjects });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.classes });
 }

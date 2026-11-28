@@ -14,7 +14,7 @@ export class ContentService {
   async subjects(auth: AuthUser): Promise<SubjectsResponse> {
     const [user, subjects, mastered] = await Promise.all([
       this.users.ensure(auth),
-      this.repo.visibleSubjects(),
+      this.repo.visibleSubjects(auth.id),
       this.repo.masteredByTopic(auth.id),
     ]);
     return {
@@ -24,7 +24,7 @@ export class ContentService {
           ...s,
           topics: s.topics.map((t) => ({
             ...t,
-            locked: t.unlockLevel > user.level,
+            locked: !t.assigned && t.unlockLevel > user.level,
             mastered: mastered.get(t.id) ?? 0,
           })),
         })),

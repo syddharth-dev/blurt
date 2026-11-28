@@ -73,7 +73,7 @@ export function toContentTerm(t: RoundTerm): ContentTerm {
     accept: t.accept,
     close: t.close,
     confusables: t.confusables,
-    // Uploaded pictures (url) are drawn from Phase 4; bundled diagrams work now.
+    // A bundled diagram, or a teacher's uploaded picture (Phase 4).
     ...(t.picture?.diagram
       ? {
           picture: {
@@ -82,7 +82,17 @@ export function toContentTerm(t: RoundTerm): ContentTerm {
             altText: t.picture.altText,
           },
         }
-      : {}),
+      : t.picture?.url
+        ? {
+            picture: {
+              url: t.picture.url,
+              width: t.picture.width,
+              height: t.picture.height,
+              highlight: t.picture.highlight,
+              altText: t.picture.altText,
+            },
+          }
+        : {}),
   };
 }
 
@@ -115,11 +125,16 @@ export async function loadRound(
   termIds?: string[],
   online = true,
 ): Promise<RoundLoad> {
-  const offline = (): RoundLoad => {
+  const offline = (noConnection = false): RoundLoad => {
     const r = localRound(topicId, termIds);
-    return r
-      ? { status: 'ready', round: r }
-      : { status: 'error', message: "That topic isn't here. Pick another one from Home." };
+    if (r) return { status: 'ready', round: r };
+    // Class topics aren't bundled: they need the server.
+    return {
+      status: 'error',
+      message: noConnection
+        ? "You're offline. Topics from your class need a connection."
+        : "That topic isn't here. Pick another one from Home.",
+    };
   };
   const request = startRequest(topicId, termIds);
   if (!online || !request) return offline();
@@ -129,7 +144,7 @@ export async function loadRound(
       round: fromServer(await endpoints.startRound(request), topicId, termIds),
     };
   } catch (e) {
-    if (isOffline(e)) return offline();
+    if (isOffline(e)) return offline(true);
     if (e instanceof ApiRequestError && e.code === 'TOPIC_LOCKED') {
       return { status: 'error', message: `${e.message} Keep playing to level up.` };
     }

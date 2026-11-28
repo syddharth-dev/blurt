@@ -8,5 +8,6 @@ import { ContentService } from './content.service.js';
   imports: [UsersModule],
   controllers: [ContentController],
   providers: [ContentService, { provide: ContentRepository, useClass: PrismaContentRepository }],
+  exports: [ContentRepository],
 })
 export class ContentModule {}

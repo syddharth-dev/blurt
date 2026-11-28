@@ -5,7 +5,7 @@ import {
   type LocalPicture,
 } from '@blurt/shared/content';
 import { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   cancelAnimation,
@@ -64,24 +64,60 @@ export function PictureCard({ term, solved, celebrate = false }: Props) {
     );
   }
 
-  const diagram = DIAGRAMS[term.picture.diagram as DiagramId];
+  const picture = term.picture;
+  const diagram = 'diagram' in picture ? DIAGRAMS[picture.diagram as DiagramId] : undefined;
+  const frame = fitFrame('url' in picture ? aspectOf(picture.width, picture.height) : 1);
   return (
     <View
       style={[styles.card, celebrate && styles.celebrate]}
       accessible
       accessibilityRole="image"
-      accessibilityLabel={`${term.picture.altText}. The part to name is glowing.${solved ? ` It's ${term.display}.` : ''}`}
+      accessibilityLabel={`${picture.altText || 'A picture'}. The part to name is glowing.${solved ? ` It's ${term.display}.` : ''}`}
     >
       <View style={styles.area}>
         {diagram ? <SvgXml xml={diagram.svg} width={AREA} height={AREA} /> : null}
-        <Highlight picture={term.picture} label={solved ? term.display : '?'} />
+        {'url' in picture ? (
+          // A teacher's upload, fitted (contain) inside the lilac panel.
+          <Image
+            source={{ uri: picture.url }}
+            resizeMode="contain"
+            style={{ position: 'absolute', ...frame }}
+          />
+        ) : null}
+        <Highlight
+          highlight={picture.highlight}
+          frame={frame}
+          label={solved ? term.display : '?'}
+        />
       </View>
       {tag}
     </View>
   );
 }
 
-function Highlight({ picture, label }: { picture: LocalPicture; label: string }) {
+type Frame = { left: number; top: number; width: number; height: number };
+
+const aspectOf = (w: number | null, h: number | null) => (w && h ? w / h : 1);
+
+/**
+ * Where the picture sits inside the square panel when fitted (contain): the highlight's
+ * fractions are of the picture, not the panel. Bundled diagrams are square and fill it.
+ */
+export function fitFrame(aspect: number): Frame {
+  const width = aspect >= 1 ? AREA : AREA * aspect;
+  const height = aspect >= 1 ? AREA / aspect : AREA;
+  return { left: (AREA - width) / 2, top: (AREA - height) / 2, width, height };
+}
+
+function Highlight({
+  highlight: h,
+  frame,
+  label,
+}: {
+  highlight: LocalPicture['highlight'];
+  frame: Frame;
+  label: string;
+}) {
   const reduced = useReducedMotion();
   const glow = useSharedValue(GLOW.max);
   const spin = useSharedValue(0);
@@ -112,12 +148,16 @@ function Highlight({ picture, label }: { picture: LocalPicture; label: string })
     };
   }, [reduced, glow, spin]);
 
-  const soft = picture.highlight.shape === 'rect' ? GLOW.boxFactor : 1;
+  const soft = h.shape === 'rect' ? GLOW.boxFactor : 1;
   const glowStyle = useAnimatedStyle(() => ({ opacity: glow.value * soft }));
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
 
-  const h = picture.highlight;
-  const box = { left: h.x * AREA, top: h.y * AREA, width: h.w * AREA, height: h.h * AREA };
+  const box = {
+    left: frame.left + h.x * frame.width,
+    top: frame.top + h.y * frame.height,
+    width: h.w * frame.width,
+    height: h.h * frame.height,
+  };
   const cx = box.left + box.width / 2;
   const cy = box.top + box.height / 2;
   const isEllipse = h.shape === 'ellipse';

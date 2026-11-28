@@ -84,8 +84,9 @@ model Class {
   id          String   @id @default(cuid())
   name        String              // "Grade 8 – Rizal"
   code        String   @unique    // 6-char join code, e.g. "K7Q2MX"
-  schoolId    String
-  school      School   @relation(fields: [schoolId], references: [id])
+  schoolId    String?            // optional until schools are set up (admin reference data)
+  school      School?  @relation(fields: [schoolId], references: [id])
+  createdAt   DateTime @default(now())
   teacherId   String
   teacher     User     @relation("ClassTeacher", fields: [teacherId], references: [id])
   enrollments Enrollment[]
@@ -248,7 +249,8 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | Method | Route | Purpose |
 |---|---|---|
 | GET | `/me` · PATCH `/me` | Profile, XP, streak, settings |
-| POST | `/classes/join` | `{code}` → join a class |
+| POST | `/classes/join` | `{code}` → join a class (10 tries a minute) |
+| GET | `/classes` | My classes with their published assigned topics and due dates |
 | GET | `/subjects` | Subjects and topics the student can see, with lock and assignment state |
 | GET | `/daily` | Today's challenge (Phase 5; the app picks it locally for now) |
 | POST | `/rounds` | `{topicId}` or `{termIds}` (practice) → ordered terms **with their answers, variants and confusables**, pictures and highlights, and the round's budgets |
@@ -280,8 +282,10 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | POST | `/teacher/match-test` | `{termDraft, alternatives[]}` → verdict (for "Test with my voice") |
 | POST | `/teacher/import` | CSV + zip → draft terms + a report of problems |
 | GET/POST | `/teacher/classes` | List / create classes (generates a join code) |
-| PATCH | `/teacher/classes/:id` | Rename, regenerate code |
-| PUT | `/teacher/classes/:id/topics` | Assign topics, due dates |
+| GET | `/teacher/classes/:id` | Code, roster and assigned topics |
+| PATCH | `/teacher/classes/:id` | Rename (`name`), regenerate code (`newCode: true`) |
+| PUT | `/teacher/classes/:id/topics` | `{topics: [{topicId, dueOn}]}`: the full list of assigned topics |
+| DELETE | `/teacher/classes/:id/students/:studentId` | Remove a student |
 | GET | `/teacher/classes/:id/report` | Accuracy, most-missed terms, what was heard |
 
 ### Admin
@@ -309,7 +313,7 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **Budgets per round** (`ROUND_RULES` in `@blurt/shared/progress`): 3 lives, 3 hints, 2 skips, at most 10 terms.
 - **Idempotency:** an attempt or skip sent again with the same `idempotencyKey` returns the stored response. Finishing twice returns the stored summary, and XP is added once (the finish transaction claims the round).
 - **Streak** uses the phone's local date sent on finish (`nextStreak`). A round with no answers keeps the streak.
-- **Visibility:** students see published topics in the shared library (`visibility = LIBRARY`); class-assigned topics arrive with Phase 4. Someone else's round returns 404, never 403, so round ids don't leak.
+- **Visibility:** students see published topics in the shared library (`visibility = LIBRARY`) and, since Phase 4 step 5, published topics assigned to one of their classes (`src/common/visibility.ts`). Someone else's round returns 404, never 403, so round ids don't leak.
 - **Error codes:** `ROUND_FINISHED`, `OUT_OF_LIVES`, `NO_SKIPS_LEFT`, `TERM_NOT_IN_ROUND`, `TERM_DONE`, `TOPIC_LOCKED` (`ERROR_CODES` in `@blurt/shared/schemas`).
 - **Starter library:** `pnpm --filter api db:seed` loads the 30 Grade 8 terms, the 7 diagrams (`Picture.diagram`) and the 4 subjects, owned by a `library` system user. It's safe to run again.
 
@@ -331,3 +335,10 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 ### Built in Phase 4 step 4 (decisions)
 - `POST /teacher/match-test` takes `{term: {canonical, accept, close, confusables}, alternatives, inputMode}` (`MatchTestRequest`) and returns `{verdict, matched, feedback, strategy}`. It runs `matchAnswer` from `@blurt/shared/matcher`, the function used for students' attempts. It reads and stores nothing, so it has no owner check; it is teachers only (a student gets 403, tested) and limited to 120 a minute.
 - **Pronunciation** uses the device's voice in the app and the dashboard, so there is no audio job and `audioUrl` stays null for now.
+
+### Built in Phase 4 step 5 (decisions)
+- **Who can see a topic:** the topic is published, and it's either in the library or assigned to a class the student is in. `/subjects`, starting a round, and practice terms all use this one rule (`visibleTopic` in `apps/api/src/common/visibility.ts`). Topics assigned to a student's class are never locked by level (`assigned` on `TopicSummary`).
+- **Classes:** a teacher manages only the classes they teach. Another teacher gets **403** on every class route (tested); admins can manage any. `Class.schoolId` is optional until schools are set up (admin reference data, later), and classes have a `createdAt`.
+- **Join codes:** 6 characters from `CLASS_CODE_ALPHABET` (no 0/O, 1/I/L), unique, made with `crypto.randomInt` and retried on the rare clash. A wrong code is 404 `CLASS_NOT_FOUND`. Joining twice is fine (`alreadyMember: true`).
+- **Assigning:** your own topics or published library topics (another teacher's: 403). Students only see published ones. Due dates are days (`dueOn`, "YYYY-MM-DD"), stored at noon UTC so no time zone moves them.
+- **Pictures in rounds:** `RoundPicture` now carries `width` and `height`, and `url` only once the picture is `READY`. The app fits the picture inside the panel and places the highlight on the picture's own area.

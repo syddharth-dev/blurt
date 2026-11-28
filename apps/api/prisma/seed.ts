@@ -81,7 +81,8 @@ async function main() {
         fact: t.fact,
         difficulty: t.difficulty,
         status: 'PUBLISHED' as const,
-        pictureId: t.picture ? `diagram-${t.picture.diagram}` : null,
+        // The starter set only uses bundled diagrams.
+        pictureId: t.picture && 'diagram' in t.picture ? `diagram-${t.picture.diagram}` : null,
         highlight: t.picture ? t.picture.highlight : {},
       };
       await db.term.upsert({ where: { id: t.id }, update: data, create: { id: t.id, ...data } });

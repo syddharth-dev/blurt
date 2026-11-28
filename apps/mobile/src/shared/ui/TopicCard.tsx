@@ -22,6 +22,8 @@ type Props = {
   today?: boolean;
   /** Locked until this level: lilac panel with a lock and "Unlocks at level N". */
   lockedAtLevel?: number;
+  /** A class assignment's due date, e.g. "Due Fri", shown as a coral tag on the panel. */
+  dueLabel?: string;
   onPress: () => void;
 };
 
@@ -45,13 +47,16 @@ export function TopicCard({
   total,
   today,
   lockedAtLevel,
+  dueLabel,
   onPress,
 }: Props) {
   const locked = lockedAtLevel !== undefined;
   const look = subjectColors[subject];
   const a11y = locked
     ? `${title}, unlocks at level ${lockedAtLevel}`
-    : `${title}, ${subject}, ${mastered} of ${total} mastered${today ? ", today's topic" : ''}`;
+    : `${title}, ${subject}, ${mastered} of ${total} mastered${today ? ", today's topic" : ''}${
+        dueLabel ? `, ${dueLabel}` : ''
+      }`;
   return (
     <Pressable
       accessibilityRole="button"
@@ -76,6 +81,10 @@ export function TopicCard({
         {today ? (
           <View style={styles.todayTag}>
             <Text style={styles.todayText}>Today</Text>
+          </View>
+        ) : dueLabel ? (
+          <View style={[styles.todayTag, styles.dueTag]}>
+            <Text style={[styles.todayText, styles.dueText]}>{dueLabel}</Text>
           </View>
         ) : null}
       </View>
@@ -143,6 +152,8 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   todayText: { ...textStyle('chip'), color: colors.white },
+  dueTag: { backgroundColor: colors.coralTint },
+  dueText: { color: colors.coralInk },
   body: { paddingHorizontal: space.s4, paddingBottom: space.s4, gap: space.s6 },
   name: {
     ...textStyle('bodyMedium'),

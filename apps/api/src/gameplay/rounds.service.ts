@@ -40,9 +40,10 @@ export class RoundsService {
     const user = await this.users.ensure(auth);
 
     if ('topicId' in body) {
-      const found = await this.repo.topicTerms(body.topicId);
+      const found = await this.repo.topicTerms(body.topicId, user.id);
       if (!found || !found.terms.length) throw new NotFoundException("That topic isn't available.");
-      if (found.topic.unlockLevel > user.level) {
+      // A teacher's assignment is never locked by level.
+      if (!found.topic.assigned && found.topic.unlockLevel > user.level) {
         throw apiError(
           HttpStatus.FORBIDDEN,
           ERROR_CODES.topicLocked,
@@ -64,6 +65,7 @@ export class RoundsService {
 
     const terms = await this.repo.termsByIds(
       [...new Set(body.termIds)].slice(0, ROUND_RULES.termsPerRound),
+      user.id,
     );
     if (!terms.length) throw new NotFoundException("Those terms aren't available.");
     const round = await this.repo.createRound({
@@ -167,7 +169,7 @@ export class RoundsService {
     if (round.summary) return round.summary;
 
     const user = await this.users.ensure(auth);
-    const terms = round.terms ?? (await this.repo.termsByIds(round.termIds));
+    const terms = round.terms ?? (await this.repo.termsByIds(round.termIds, round.userId));
     const display = new Map(terms.map((t) => [t.id, t.display]));
     const results: RoundSummaryResponse['results'] = [];
     const mastery: MasteryDelta[] = [];
@@ -237,7 +239,7 @@ export class RoundsService {
    */
   private async servedTerm(round: RoundRecord, termId: string) {
     if (round.terms) return round.terms.find((t) => t.id === termId) ?? null;
-    const [term] = await this.repo.termsByIds([termId]);
+    const [term] = await this.repo.termsByIds([termId], round.userId);
     return term ?? null;
   }
 

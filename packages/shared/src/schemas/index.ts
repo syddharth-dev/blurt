@@ -62,6 +62,8 @@ export const TopicSummary = z.object({
   locked: z.boolean(),
   /** Terms this student has mastered in the topic */
   mastered: z.number().int(),
+  /** Assigned to one of the student's classes (never locked) */
+  assigned: z.boolean(),
 });
 export type TopicSummary = z.infer<typeof TopicSummary>;
 
@@ -88,6 +90,9 @@ export const RoundPicture = z.object({
   /** A bundled diagram id (e.g. "atom"), or null for an uploaded picture with a url */
   diagram: z.string().nullable(),
   url: z.string().nullable(),
+  /** Pixel size of an uploaded picture, so the app can fit it and place the highlight */
+  width: z.number().int().nullable(),
+  height: z.number().int().nullable(),
   highlight: Highlight,
   altText: z.string(),
 });
@@ -444,6 +449,98 @@ export const MatchTestResult = z.object({
 });
 export type MatchTestResult = z.infer<typeof MatchTestResult>;
 
+// ── Classes ──────────────────────────────────────────────────────────────────
+
+/** 6 characters, no look-alikes (no 0/O, 1/I/L). Typed in any case. */
+export const CLASS_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const ClassCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9]{6}$/, 'A class code has 6 letters and numbers.');
+
+/** POST /classes/join */
+export const JoinClass = z.object({ code: ClassCode }).strict();
+export type JoinClass = z.infer<typeof JoinClass>;
+
+export const AssignedTopic = z.object({
+  id: z.string(),
+  title: z.string(),
+  subject: z.string(),
+  /** Brand token name, e.g. "coral" */
+  color: z.string(),
+  termCount: z.number().int(),
+  mastered: z.number().int(),
+  /** "YYYY-MM-DD", or null for no due date */
+  dueOn: LocalDate.nullable(),
+});
+export type AssignedTopic = z.infer<typeof AssignedTopic>;
+
+export const StudentClass = z.object({
+  id: z.string(),
+  name: z.string(),
+  teacherName: z.string(),
+  /** Published topics assigned to the class, due soonest first */
+  topics: z.array(AssignedTopic),
+});
+export type StudentClass = z.infer<typeof StudentClass>;
+
+/** GET /classes */
+export const StudentClasses = z.object({ classes: z.array(StudentClass) });
+export type StudentClasses = z.infer<typeof StudentClasses>;
+
+export const JoinClassResult = z.object({ class: StudentClass, alreadyMember: z.boolean() });
+export type JoinClassResult = z.infer<typeof JoinClassResult>;
+
+/** POST /teacher/classes */
+export const CreateClass = z.object({ name: z.string().trim().min(1).max(60) }).strict();
+export type CreateClass = z.infer<typeof CreateClass>;
+
+/** PATCH /teacher/classes/:id. `newCode: true` replaces the join code (the old one stops working). */
+export const UpdateClass = z
+  .object({
+    name: z.string().trim().min(1).max(60).optional(),
+    newCode: z.literal(true).optional(),
+  })
+  .strict();
+export type UpdateClass = z.infer<typeof UpdateClass>;
+
+/** PUT /teacher/classes/:id/topics: the full list of assigned topics (replaces what was there). */
+export const AssignTopics = z
+  .object({
+    topics: z
+      .array(z.object({ topicId: z.string().min(1), dueOn: LocalDate.nullable() }).strict())
+      .max(100),
+  })
+  .strict();
+export type AssignTopics = z.infer<typeof AssignTopics>;
+
+export const TeacherClassSummary = z.object({
+  id: z.string(),
+  name: z.string(),
+  code: z.string(),
+  studentCount: z.number().int(),
+  topicCount: z.number().int(),
+});
+export type TeacherClassSummary = z.infer<typeof TeacherClassSummary>;
+
+export const TeacherClassList = z.object({ classes: z.array(TeacherClassSummary) });
+export type TeacherClassList = z.infer<typeof TeacherClassList>;
+
+export const TeacherClassDetail = TeacherClassSummary.extend({
+  students: z.array(z.object({ id: z.string(), name: z.string(), joinedAt: z.string() })),
+  topics: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      subject: z.string(),
+      status: Status,
+      dueOn: LocalDate.nullable(),
+    }),
+  ),
+});
+export type TeacherClassDetail = z.infer<typeof TeacherClassDetail>;
+
 // ── Errors and health ────────────────────────────────────────────────────────
 
 /** Every error response uses this one shape. */
@@ -466,6 +563,7 @@ export const ERROR_CODES = {
   /** Publishing (or saving a published term) failed the publish checks */
   notReady: 'NOT_READY',
   storageNotConfigured: 'STORAGE_NOT_CONFIGURED',
+  classNotFound: 'CLASS_NOT_FOUND',
 } as const;
 
 export const HealthResponse = z.object({ ok: z.literal(true) });

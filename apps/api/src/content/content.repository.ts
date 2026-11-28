@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { assignedTo, visibleTopic } from '../common/visibility.js';
 
 export type TopicRow = {
   id: string;
@@ -7,12 +8,13 @@ export type TopicRow = {
   grade: number;
   unlockLevel: number;
   termCount: number;
+  assigned: boolean;
 };
 export type SubjectRow = { id: string; name: string; color: string; topics: TopicRow[] };
 
 export abstract class ContentRepository {
-  /** Published topics a student may see: the shared library (class topics arrive in Phase 4). */
-  abstract visibleSubjects(): Promise<SubjectRow[]>;
+  /** Published topics a student may see: the shared library and topics assigned to their classes. */
+  abstract visibleSubjects(userId: string): Promise<SubjectRow[]>;
   /** Terms mastered per topic for this user. */
   abstract masteredByTopic(userId: string): Promise<Map<string, number>>;
 }
@@ -23,14 +25,17 @@ export class PrismaContentRepository extends ContentRepository {
     super();
   }
 
-  async visibleSubjects(): Promise<SubjectRow[]> {
+  async visibleSubjects(userId: string): Promise<SubjectRow[]> {
     const subjects = await this.db.subject.findMany({
       orderBy: { name: 'asc' },
       include: {
         topics: {
-          where: { status: 'PUBLISHED', visibility: 'LIBRARY' },
+          where: visibleTopic(userId),
           orderBy: { title: 'asc' },
-          include: { _count: { select: { terms: { where: { status: 'PUBLISHED' } } } } },
+          include: {
+            _count: { select: { terms: { where: { status: 'PUBLISHED' } } } },
+            classes: { where: assignedTo(userId).classes.some, take: 1, select: { classId: true } },
+          },
         },
       },
     });
@@ -44,6 +49,7 @@ export class PrismaContentRepository extends ContentRepository {
         grade: t.grade,
         unlockLevel: t.unlockLevel,
         termCount: t._count.terms,
+        assigned: t.classes.length > 0,
       })),
     }));
   }

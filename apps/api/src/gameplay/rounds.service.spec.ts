@@ -37,6 +37,16 @@ async function rejects(p: Promise<unknown>, status: number, code?: string) {
 }
 
 describe('RoundsService', () => {
+  it('a topic assigned to the student’s class is never locked by level', async () => {
+    const { service, repo } = setup();
+    repo.unlockLevels.set('atoms-and-ions', 9);
+    await rejects(service.start(me, { topicId: 'atoms-and-ions' }), 403, ERROR_CODES.topicLocked);
+    repo.assigned.set('atoms-and-ions', new Set([me.id]));
+    expect((await service.start(me, { topicId: 'atoms-and-ions' })).terms.length).toBeGreaterThan(
+      0,
+    );
+  });
+
   it("a teacher's edit mid-round doesn't change the round in progress (term versions)", async () => {
     const { service, repo } = setup();
     const r = await service.start(me, { topicId: 'atoms-and-ions' });

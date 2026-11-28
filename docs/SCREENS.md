@@ -40,6 +40,8 @@ Layout, top to bottom: HUD → picture card → letter tiles → Pip + bubble �
 
 **Built (Phase 2):** `apps/mobile/src/features/play/`. For now, Home has a "Let's blurt" button (a mixed round of 10 terms) and one button per topic. Until a term has a picture, its card shows the clue, and the first hint reveals a letter. The pronunciation button shows the syllables and, since Phase 4, says the term with the phone's voice (`expo-speech`; needs a development build made after it was added). 15 of the 30 starter terms have a bundled diagram (atom, animal cell, cell division, plant cell, earthquake, food chain, solar system). The glow, ring, leader line and badge are drawn by `PictureCard` from the term's highlight box. Box-shaped highlights glow more softly and use a still dashed frame instead of a rotating ring. The speech language is fixed to en-US until the Profile screen adds a setting.
 
+**Built (Phase 4):** the Topics tab starts with the student's classes (`features/topics/ClassTopics.tsx`): each class's published topics, soonest due date first, with a coral "Due Fri" / "Due today" / "Overdue" tag on the card. Without a class, a card offers "Join a class", which opens `app/join-class.tsx` (`features/classes/JoinClassScreen.tsx`): type the 6-character code, then "You're in". Class topics need a connection; offline, the starter topics below still work. The Play card draws teachers' uploaded pictures (fitted inside the lilac panel) with the same glow, ring and badge.
+
 ## 3. Round summary
 Background: `scene-day`, big slow sunburst, confetti.
 
@@ -57,4 +59,4 @@ Background: `scene-day`, big slow sunburst, confetti.
 - **XP bar** uses the level rule (every 500 XP; pending confirmation). The XP total lasts only for the session until Phase 3 saves it.
 
 ## 4. Screens still to design
-Onboarding (choose grade, **enter class code**) · Sign in (built in Phase 3: email, then a 6-digit code, with Pip waving; the design is a first pass, since it's not on the canvas) · Topic list and topic detail (assigned topics with due dates first) · League (weekly leaderboard) · Profile and settings (speech language, reduce motion, sound). Teacher dashboard pages are listed in `TEACHER_DASHBOARD.md`.
+Onboarding (choose grade, **enter class code**; for now the class code is entered from Topics → "Join a class", built in Phase 4) · Sign in (built in Phase 3: email, then a 6-digit code, with Pip waving; the design is a first pass, since it's not on the canvas) · Topic list and topic detail (assigned topics with due dates first) · League (weekly leaderboard) · Profile and settings (speech language, reduce motion, sound). Teacher dashboard pages are listed in `TEACHER_DASHBOARD.md`.

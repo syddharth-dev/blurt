@@ -1,5 +1,7 @@
 import {
   AttemptResponse,
+  JoinClassResult,
+  StudentClasses,
   Me,
   RoundStarted,
   RoundSummaryResponse,
@@ -16,6 +18,9 @@ export const endpoints = {
   me: () => api('/me', { schema: Me }),
   updateMe: (body: UpdateMe) => api('/me', { method: 'PATCH', body, schema: Me }),
   subjects: () => api('/subjects', { schema: SubjectsResponse }),
+  classes: () => api('/classes', { schema: StudentClasses }),
+  joinClass: (code: string) =>
+    api('/classes/join', { method: 'POST', body: { code }, schema: JoinClassResult }),
   startRound: (body: StartRound) => api('/rounds', { method: 'POST', body, schema: RoundStarted }),
   attempt: (roundId: string, body: AttemptRequest) =>
     api(`/rounds/${roundId}/attempts`, { method: 'POST', body, schema: AttemptResponse }),

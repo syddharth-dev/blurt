@@ -4,6 +4,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
 import { AuthAdmin } from '../src/auth/auth-admin.js';
+import { ClassesRepository } from '../src/classes/classes.repository.js';
 import { JwtVerifier } from '../src/auth/jwt-verifier.js';
 import { ContentRepository } from '../src/content/content.repository.js';
 import { RoundsRepository } from '../src/gameplay/rounds.repository.js';
@@ -12,6 +13,7 @@ import { PicturesRepository } from '../src/media/pictures.repository.js';
 import { TeacherContentRepository } from '../src/teacher/teacher-content.repository.js';
 import { UsersRepository } from '../src/users/users.repository.js';
 import {
+  FakeClassesRepository,
   FakeContentRepository,
   FakePictureStorage,
   FakePicturesRepository,
@@ -33,6 +35,7 @@ describe('API (e2e, in-memory data)', () => {
   let app: INestApplication<App>;
   const users = new FakeUsersRepository();
   const rounds = new FakeRoundsRepository(users);
+  const classes = new FakeClassesRepository(users);
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
@@ -50,6 +53,8 @@ describe('API (e2e, in-memory data)', () => {
       .useValue(new FakePicturesRepository())
       .overrideProvider(PictureStorage)
       .useValue(new FakePictureStorage())
+      .overrideProvider(ClassesRepository)
+      .useValue(classes)
       .overrideProvider(AuthAdmin)
       .useValue({ invite: async () => ({ id: 'invited-1' }), findIdByEmail: async () => null })
       .compile();
@@ -386,6 +391,96 @@ describe('API (e2e, in-memory data)', () => {
         .expect(403);
       const own = await http().get(`/v1/teacher/pictures/${id}`).set(as('tea-p1')).expect(200);
       expect(own.body.state).toBe('UPLOADING');
+    });
+  });
+
+  describe('class routes (AGENTS.md rule 9)', () => {
+    const http = () => request(app.getHttpServer());
+    let classId = '';
+    let code = '';
+
+    beforeAll(async () => {
+      await users.create({
+        id: 'tea-c1',
+        name: 'Ms Reyes',
+        email: 'c1@school.test',
+        role: 'TEACHER',
+      });
+      await users.create({
+        id: 'tea-c2',
+        name: 'Mr Cruz',
+        email: 'c2@school.test',
+        role: 'TEACHER',
+      });
+      classes.topics.set('own-topic', {
+        id: 'own-topic',
+        ownerId: 'tea-c1',
+        status: 'PUBLISHED',
+        visibility: 'CLASS',
+        title: 'Cells',
+        subject: 'Biology',
+        color: 'coral',
+        termCount: 4,
+      });
+    });
+
+    it('a teacher creates a class and assigns a topic', async () => {
+      const c = await http()
+        .post('/v1/teacher/classes')
+        .set(as('tea-c1'))
+        .send({ name: 'Rizal' })
+        .expect(201);
+      classId = c.body.id;
+      code = c.body.code;
+      expect(code).toMatch(/^[A-Z2-9]{6}$/);
+      await http()
+        .put(`/v1/teacher/classes/${classId}/topics`)
+        .set(as('tea-c1'))
+        .send({ topics: [{ topicId: 'own-topic', dueOn: '2026-12-04' }] })
+        .expect(200);
+    });
+
+    it('a student gets 403 on teacher class routes', () =>
+      http().get('/v1/teacher/classes').set(as('stu-c')).expect(403));
+
+    type Route = ['get' | 'patch' | 'put' | 'delete', () => string, () => object | undefined];
+    it.each<Route>([
+      ['get', () => `/v1/teacher/classes/${classId}`, () => undefined],
+      ['patch', () => `/v1/teacher/classes/${classId}`, () => ({ name: 'Mine' })],
+      ['put', () => `/v1/teacher/classes/${classId}/topics`, () => ({ topics: [] })],
+      ['delete', () => `/v1/teacher/classes/${classId}/students/stu-c`, () => undefined],
+    ])('another teacher gets 403: %s', async (method, path, body) => {
+      const req = http()[method](path()).set(as('tea-c2'));
+      const payload = body();
+      await (payload ? req.send(payload) : req).expect(403);
+    });
+
+    it('a student joins with the code in lower case and sees the assigned topic', async () => {
+      const joined = await http()
+        .post('/v1/classes/join')
+        .set(as('stu-c'))
+        .send({ code: code.toLowerCase() })
+        .expect(200);
+      expect(joined.body).toMatchObject({
+        alreadyMember: false,
+        class: {
+          name: 'Rizal',
+          teacherName: 'Ms Reyes',
+          topics: [{ id: 'own-topic', dueOn: '2026-12-04' }],
+        },
+      });
+      const mine = await http().get('/v1/classes').set(as('stu-c')).expect(200);
+      expect(mine.body.classes).toHaveLength(1);
+    });
+
+    it('a bad code is 400 (shape) or 404 (no such class)', async () => {
+      await http().post('/v1/classes/join').set(as('stu-c')).send({ code: '12' }).expect(400);
+      const res = await http()
+        .post('/v1/classes/join')
+        .set(as('stu-c'))
+        .send({ code: 'ZZZZZZ' })
+        .expect(404);
+      expect(res.body.error.code).toBe('CLASS_NOT_FOUND');
     });
   });
 });
