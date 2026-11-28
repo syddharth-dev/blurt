@@ -18,6 +18,15 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 
 ## Pages
 
+**Built (Phase 4, step 1):**
+- **Sign-in:** email plus a code. Teachers are invited, so the dashboard never creates accounts.
+- **Role gate:** student accounts see a friendly "this dashboard is for teachers" page.
+- **Shell:** the sidebar, plus an Overview placeholder.
+- **Teachers page (admins only):** invite by email (a new email gets the branded invite; an existing student account is promoted), and the list of teachers and admins. API: `POST /admin/teachers/invite` and `GET /admin/teachers`, both `@Roles('ADMIN')`, with tests proving students and teachers get 403.
+- **The first admin** is made with `pnpm --filter api make-admin`.
+- Code: `apps/dashboard/src/`. The signed-in area renders only in the browser (`use(browser())` in a Suspense boundary), since the session lives in localStorage.
+
+
 1. **Sign in** (Supabase Auth, same accounts as the app).
 2. **Overview**: my classes, recent activity, terms students miss most this week.
 3. **Topics**: list with subject, grade, number of terms, status (Draft / Published), and which classes it's assigned to. Create, duplicate, archive.

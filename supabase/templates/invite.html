@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
+<meta name="supported-color-schemes" content="light only">
+<title>You're invited to Blurt!</title>
+<!--
+  Blurt! teacher invite (Supabase → Authentication → Emails → Templates → Invite user).
+  {{ .ConfirmationURL }} signs the teacher in and lands them on the dashboard (the API's
+  DASHBOARD_URL, which must be listed in Authentication → URL Configuration → Redirect URLs).
+  Colours mirror docs/BRAND.md. Email clients ignore CSS variables, so hex values are inlined.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 0; background: #5B2EFF; }
+  table { border-collapse: collapse; }
+  @media (max-width: 480px) {
+    .card { padding: 28px 22px !important; }
+    .code { font-size: 34px !important; letter-spacing: 8px !important; }
+  }
+</style>
+</head>
+<body style="margin: 0; padding: 0; background: #5B2EFF; -webkit-text-size-adjust: 100%;">
+  <!-- Preview text shown in the inbox list -->
+  <div style="display: none; max-height: 0; overflow: hidden; opacity: 0; color: #5B2EFF;">
+    You're invited to create science terms and classes on Blurt!
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: #5B2EFF;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 480px;">
+
+          <!-- Wordmark: lowercase blurt + a sunny ! -->
+          <tr>
+            <td align="center" style="padding-bottom: 24px; font-family: 'Bricolage Grotesque', 'Arial Black', Arial, sans-serif; font-weight: 800; font-size: 48px; line-height: 1; letter-spacing: -1.5px; color: #FFFFFF;">
+              blurt<span style="color: #FFC93C;">!</span>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td class="card" style="background: #FFFFFF; border-radius: 28px; padding: 36px 32px; box-shadow: 0 14px 32px rgba(22,12,58,0.3);">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-family: 'DM Sans', Arial, sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #4B4370; padding-bottom: 8px;">
+                    Pip here
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'Bricolage Grotesque', 'Arial Black', Arial, sans-serif; font-weight: 800; font-size: 26px; line-height: 1.15; color: #160C3A; padding-bottom: 10px;">
+                    You're invited to teach on Blurt!
+                  </td>
+                </tr>
+                <tr>
+                  <td style="font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; line-height: 1.5; color: #4B4370; padding-bottom: 24px;">
+                    Your school added you as a teacher. Create topics with your own pictures, run classes with a join code, and see which terms your students miss.
+                  </td>
+                </tr>
+
+                <!-- The button: sunny with night text and a 3D bottom edge, like the app's buttons -->
+                <tr>
+                  <td align="center" style="padding-bottom: 24px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td align="center" style="background: #FFC93C; border-radius: 20px; border-bottom: 6px solid #C98F00;">
+                          <a href="{{ .ConfirmationURL }}" style="display: inline-block; padding: 16px 28px; font-family: 'Bricolage Grotesque', 'Arial Black', Arial, sans-serif; font-weight: 800; font-size: 18px; line-height: 1; color: #160C3A; text-decoration: none;">Open the dashboard</a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td style="background: #EFE9FF; border-radius: 16px; padding: 14px 16px; font-family: 'DM Sans', Arial, sans-serif; font-size: 14px; line-height: 1.5; color: #160C3A;">
+                    <strong>The button works once.</strong> If it has expired, or any time after, sign in on the dashboard with this email: we'll send you a code.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding: 24px 12px 0; font-family: 'DM Sans', Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #FFFFFF;">
+              Not a teacher, or not expecting this? You can ignore this email.
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding: 12px 12px 0; font-family: 'DM Sans', Arial, sans-serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #FFE38A;">
+              See it. Say it. Know it.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

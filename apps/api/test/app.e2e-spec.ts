@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../src/app.module.js';
+import { AuthAdmin } from '../src/auth/auth-admin.js';
 import { JwtVerifier } from '../src/auth/jwt-verifier.js';
 import { ContentRepository } from '../src/content/content.repository.js';
 import { RoundsRepository } from '../src/gameplay/rounds.repository.js';
@@ -33,6 +34,8 @@ describe('API (e2e, in-memory data)', () => {
       .useValue(rounds)
       .overrideProvider(ContentRepository)
       .useValue(new FakeContentRepository())
+      .overrideProvider(AuthAdmin)
+      .useValue({ invite: async () => ({ id: 'invited-1' }), findIdByEmail: async () => null })
       .compile();
     app = moduleRef.createNestApplication();
     app.setGlobalPrefix('v1', { exclude: [{ path: 'health', method: RequestMethod.GET }] });
@@ -175,5 +178,47 @@ describe('API (e2e, in-memory data)', () => {
         idempotencyKey: 'short',
       })
       .expect(400);
+  });
+
+  describe('admin routes (AGENTS.md rule 9)', () => {
+    const invite = (who: string) =>
+      request(app.getHttpServer())
+        .post('/v1/admin/teachers/invite')
+        .set(as(who))
+        .send({ email: 'new.teacher@school.edu' });
+
+    it('a student gets 403', async () => {
+      const res = await invite('stu-1').expect(403);
+      expect(res.body.error.code).toBe('FORBIDDEN');
+      await request(app.getHttpServer()).get('/v1/admin/teachers').set(as('stu-1')).expect(403);
+    });
+
+    it('a teacher gets 403 too: only admins invite', async () => {
+      await users.create({ id: 'tea-1', name: 'T', email: 'tea-1@school.test', role: 'TEACHER' });
+      await invite('tea-1').expect(403);
+    });
+
+    it('an admin invites a teacher and sees them in the staff list', async () => {
+      await users.create({ id: 'adm-1', name: 'A', email: 'adm-1@school.test', role: 'ADMIN' });
+      const res = await invite('adm-1').expect(201);
+      expect(res.body).toMatchObject({
+        status: 'invited',
+        teacher: { email: 'new.teacher@school.edu', role: 'TEACHER' },
+      });
+      const list = await request(app.getHttpServer())
+        .get('/v1/admin/teachers')
+        .set(as('adm-1'))
+        .expect(200);
+      expect(list.body.staff.map((s: { email: string }) => s.email)).toContain(
+        'new.teacher@school.edu',
+      );
+    });
+
+    it('rejects a bad email with 400', () =>
+      request(app.getHttpServer())
+        .post('/v1/admin/teachers/invite')
+        .set(as('adm-1'))
+        .send({ email: 'not-an-email' })
+        .expect(400));
   });
 });

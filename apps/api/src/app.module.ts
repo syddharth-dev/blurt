@@ -1,6 +1,7 @@
 import { Module, StandardSchemaValidationPipe } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConfigModule } from './common/config/config.module.js';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter.js';
@@ -13,7 +14,7 @@ import { UsersModule } from './users/users.module.js';
 
 /**
  * Root module of the modular monolith (docs/ARCHITECTURE.md → "API folder structure").
- * Still to come: leaderboard (Phase 5), teacher, media, classes, admin (Phase 4).
+ * Still to come: leaderboard (Phase 5); teacher, media, classes (Phase 4).
  */
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module.js';
     ContentModule,
     ProgressModule,
     GameplayModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

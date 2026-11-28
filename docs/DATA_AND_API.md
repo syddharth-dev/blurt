@@ -64,6 +64,7 @@ model User {
   id           String   @id            // = Supabase auth user id
   role         Role     @default(STUDENT)
   name         String
+  email        String?  @unique  // from Supabase Auth; lets admins find and invite people
   schoolId     String?
   school       School?  @relation(fields: [schoolId], references: [id])
   grade        Int?

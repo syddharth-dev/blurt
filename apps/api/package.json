@@ -22,7 +22,8 @@
     "prisma:validate": "prisma validate",
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "make-admin": "tsx scripts/make-admin.ts"
   },
   "dependencies": {
     "@blurt/shared": "workspace:*",
@@ -32,6 +33,7 @@
     "@nestjs/throttler": "^6.8.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@supabase/supabase-js": "^2.119.2",
     "dotenv": "^18.0.10",
     "jose": "^6.2.18",
     "reflect-metadata": "^0.2.2",

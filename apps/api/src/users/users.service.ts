@@ -9,9 +9,12 @@ export class UsersService {
 
   /** The user's row, created on first sign-in. New accounts are always students. */
   async ensure(auth: AuthUser): Promise<UserRecord> {
-    return (
-      (await this.repo.find(auth.id)) ?? this.repo.create({ id: auth.id, name: nameFrom(auth) })
-    );
+    const email = emailOf(auth);
+    const found = await this.repo.find(auth.id);
+    if (!found) return this.repo.create({ id: auth.id, name: nameFrom(auth), email });
+    // Rows made before emails were stored get theirs on the next request.
+    if (!found.email && email) return this.repo.update(auth.id, { email });
+    return found;
   }
 
   async me(auth: AuthUser): Promise<Me> {
@@ -35,6 +38,10 @@ export function toMe(u: UserRecord): Me {
     streak: u.streak,
     lastPlayedOn: u.lastPlayedOn,
   };
+}
+
+function emailOf(auth: AuthUser): string | null {
+  return typeof auth.claims.email === 'string' ? auth.claims.email.toLowerCase() : null;
 }
 
 /** A first name to greet with: the profile name, else the email's local part, else "Student". */

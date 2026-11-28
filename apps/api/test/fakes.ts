@@ -15,7 +15,7 @@ import {
   type TopicTerms,
 } from '../src/gameplay/rounds.repository.js';
 import type { UserProgressPatch } from '../src/progress/progress.service.js';
-import { UsersRepository, type UserRecord } from '../src/users/users.repository.js';
+import { UsersRepository, type NewUser, type UserRecord } from '../src/users/users.repository.js';
 
 export function authUser(id = 'student-1', email = 'ana.cruz@school.test'): AuthUser {
   return { id, claims: { sub: id, email } };
@@ -53,11 +53,15 @@ export class FakeUsersRepository extends UsersRepository {
   async find(id: string) {
     return this.users.get(id) ?? null;
   }
-  async create(data: { id: string; name: string }) {
+  async findByEmail(email: string) {
+    return [...this.users.values()].find((u) => u.email === email.toLowerCase()) ?? null;
+  }
+  async create(data: NewUser) {
     const u: UserRecord = {
       id: data.id,
       name: data.name,
-      role: 'STUDENT',
+      email: data.email?.toLowerCase() ?? null,
+      role: data.role ?? 'STUDENT',
       grade: null,
       xp: 0,
       level: 1,
@@ -71,6 +75,12 @@ export class FakeUsersRepository extends UsersRepository {
     const u = { ...this.users.get(id)!, ...data };
     this.users.set(id, u);
     return u;
+  }
+  async setRole(id: string, role: UserRecord['role']) {
+    return this.update(id, { role });
+  }
+  async listByRole(roles: UserRecord['role'][]) {
+    return [...this.users.values()].filter((u) => roles.includes(u.role));
   }
 }
 

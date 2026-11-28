@@ -8,6 +8,8 @@ export const EnvSchema = z.object({
   DIRECT_URL: z.string().optional(),
   SUPABASE_URL: z.url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
+  /** Where invited teachers land (the teacher dashboard). */
+  DASHBOARD_URL: z.url().default('http://localhost:3001'),
   REDIS_URL: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   CORS_ORIGINS: z

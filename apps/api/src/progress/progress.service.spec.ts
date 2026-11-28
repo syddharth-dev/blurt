@@ -4,6 +4,7 @@ const user = {
   id: 'u',
   role: 'STUDENT' as const,
   name: 'A',
+  email: null,
   grade: null,
   xp: 480,
   level: 1,

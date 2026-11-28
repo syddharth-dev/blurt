@@ -189,6 +189,34 @@ export const RoundSummaryResponse = z.object({
 });
 export type RoundSummaryResponse = z.infer<typeof RoundSummaryResponse>;
 
+// ── /admin ───────────────────────────────────────────────────────────────────
+
+export const InviteTeacher = z
+  .object({
+    email: z.string().trim().toLowerCase().pipe(z.email()),
+    name: z.string().trim().min(1).max(60).optional(),
+  })
+  .strict();
+export type InviteTeacher = z.infer<typeof InviteTeacher>;
+
+export const StaffMember = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().nullable(),
+  role: Role,
+});
+export type StaffMember = z.infer<typeof StaffMember>;
+
+export const InviteResult = z.object({
+  /** invited: a new account and an invite email · promoted: an existing account became a teacher */
+  status: z.enum(['invited', 'promoted', 'already-staff']),
+  teacher: StaffMember,
+});
+export type InviteResult = z.infer<typeof InviteResult>;
+
+export const StaffList = z.object({ staff: z.array(StaffMember) });
+export type StaffList = z.infer<typeof StaffList>;
+
 // ── Errors and health ────────────────────────────────────────────────────────
 
 /** Every error response uses this one shape. */

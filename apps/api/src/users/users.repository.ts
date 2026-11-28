@@ -6,6 +6,7 @@ export type UserRecord = {
   id: string;
   role: Role;
   name: string;
+  email: string | null;
   grade: number | null;
   xp: number;
   level: number;
@@ -13,16 +14,23 @@ export type UserRecord = {
   lastPlayedOn: string | null;
 };
 
+export type NewUser = { id: string; name: string; email?: string | null; role?: Role };
+
 export abstract class UsersRepository {
   abstract find(id: string): Promise<UserRecord | null>;
-  abstract create(data: { id: string; name: string }): Promise<UserRecord>;
+  abstract findByEmail(email: string): Promise<UserRecord | null>;
+  abstract create(data: NewUser): Promise<UserRecord>;
   abstract update(id: string, data: Partial<Omit<UserRecord, 'id' | 'role'>>): Promise<UserRecord>;
+  /** Only admin flows change roles (never the user themselves). */
+  abstract setRole(id: string, role: Role): Promise<UserRecord>;
+  abstract listByRole(roles: Role[]): Promise<UserRecord[]>;
 }
 
 const select = {
   id: true,
   role: true,
   name: true,
+  email: true,
   grade: true,
   xp: true,
   level: true,
@@ -38,9 +46,23 @@ export class PrismaUsersRepository extends UsersRepository {
   find(id: string) {
     return this.db.user.findUnique({ where: { id }, select });
   }
-  create(data: { id: string; name: string }) {
+  findByEmail(email: string) {
+    return this.db.user.findUnique({ where: { email: email.toLowerCase() }, select });
+  }
+  create(data: NewUser) {
     // upsert: two first requests at once must not both fail on the unique id
-    return this.db.user.upsert({ where: { id: data.id }, update: {}, create: data, select });
+    const row = { ...data, email: data.email?.toLowerCase() ?? null };
+    return this.db.user.upsert({ where: { id: data.id }, update: {}, create: row, select });
+  }
+  setRole(id: string, role: Role) {
+    return this.db.user.update({ where: { id }, data: { role }, select });
+  }
+  listByRole(roles: Role[]) {
+    return this.db.user.findMany({
+      where: { role: { in: roles } },
+      orderBy: { name: 'asc' },
+      select,
+    });
   }
   update(id: string, data: Partial<Omit<UserRecord, 'id' | 'role'>>) {
     return this.db.user.update({ where: { id }, data, select });
