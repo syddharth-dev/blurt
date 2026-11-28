@@ -172,6 +172,14 @@ describe('API (e2e, in-memory data)', () => {
     expect(practice.body).toMatchObject({ dueCount: 1, termIds: ['bio-decomposer'] });
   });
 
+  it('GET /daily picks a playable topic and needs a local date', async () => {
+    const http = request(app.getHttpServer());
+    const res = await http.get('/v1/daily?localDate=2026-11-28').set(as('dee')).expect(200);
+    expect(res.body).toMatchObject({ localDate: '2026-11-28', bonusXp: 150, done: false });
+    expect(res.body.topic.id).toEqual(expect.any(String));
+    await http.get('/v1/daily').set(as('dee')).expect(400);
+  });
+
   it("another student can't touch someone's round (404)", async () => {
     const http = request(app.getHttpServer());
     const start = await http

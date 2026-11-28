@@ -1,3 +1,4 @@
+import { STARTER_UNLOCK_LEVELS } from './topics.js';
 import { describe, expect, it } from 'vitest';
 import { GRADE8_TERMS, mixedRound, topicSlug, topicsOf } from './index.js';
 
@@ -25,5 +26,13 @@ describe('topics', () => {
     const round = mixedRound(GRADE8_TERMS, 10, () => 0.5);
     expect(round).toHaveLength(10);
     expect(new Set(round.map((t) => t.id)).size).toBe(10);
+  });
+});
+
+describe('STARTER_UNLOCK_LEVELS', () => {
+  it('gives every starter topic a level, two open from the start', () => {
+    const ids = topicsOf(GRADE8_TERMS).map((t) => t.id);
+    expect(Object.keys(STARTER_UNLOCK_LEVELS).sort()).toEqual([...ids].sort());
+    expect(Object.values(STARTER_UNLOCK_LEVELS).filter((l) => l === 1)).toHaveLength(2);
   });
 });

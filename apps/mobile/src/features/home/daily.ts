@@ -1,8 +1,5 @@
 import type { LocalTopic } from '@blurt/shared/content';
 
-/** Bonus for finishing the daily challenge (shown on the card; awarded by the server in Phase 3). */
-export const DAILY_BONUS_XP = 150;
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Local calendar day number, so the daily topic changes at the student's midnight. */

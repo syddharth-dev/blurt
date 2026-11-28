@@ -44,7 +44,8 @@ export function xpFor(hints: number, misses: number): number {
 /** A local calendar date, "YYYY-MM-DD". */
 export type LocalDateString = string;
 
-function dayNumber(date: LocalDateString): number {
+/** "YYYY-MM-DD" → a day number (streaks, and the daily topic rotating at local midnight). */
+export function dayNumber(date: LocalDateString): number {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number];
   return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
 }
@@ -108,3 +109,8 @@ export function nextReview(
 }
 
 export const isMastered = (box: number) => box >= MASTERED_BOX;
+
+// ── Daily challenge (Phase 5) ────────────────────────────────────────────────
+
+/** Bonus XP for finishing the daily challenge with at least one right answer, once per local day. */
+export const DAILY_BONUS_XP = 150;

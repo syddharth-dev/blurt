@@ -58,6 +58,35 @@ describe('RoundsService', () => {
     expect(repo.attempts.get([...repo.attempts.keys()].at(-1)!)?.termVersion).toBe(1);
   });
 
+  describe('daily challenge', () => {
+    it('a daily round with a right answer earns the bonus once per local day', async () => {
+      const { service, usersRepo } = setup();
+      const a = await service.start(me, { topicId: 'ecosystems', daily: true });
+      await service.attempt(me, a.roundId, say('bio-producer', 'producer'));
+      const first = await service.finish(me, a.roundId, '2026-11-22');
+      expect(first).toMatchObject({ score: 100, dailyBonus: 150, xpAfter: 250 });
+
+      const b = await service.start(me, { topicId: 'ecosystems', daily: true });
+      await service.attempt(me, b.roundId, say('bio-producer', 'producer'));
+      expect((await service.finish(me, b.roundId, '2026-11-22')).dailyBonus).toBe(0);
+
+      const c = await service.start(me, { topicId: 'ecosystems', daily: true });
+      await service.attempt(me, c.roundId, say('bio-producer', 'producer'));
+      expect((await service.finish(me, c.roundId, '2026-11-23')).dailyBonus).toBe(150);
+      expect(usersRepo.users.get(me.id)?.lastDailyOn).toBe('2026-11-23');
+    });
+
+    it('no bonus for an ordinary round, or a daily round with nothing right', async () => {
+      const { service } = setup();
+      const a = await service.start(me, { topicId: 'ecosystems' });
+      await service.attempt(me, a.roundId, say('bio-producer', 'producer'));
+      expect((await service.finish(me, a.roundId, '2026-11-22')).dailyBonus).toBe(0);
+      const b = await service.start(me, { topicId: 'ecosystems', daily: true });
+      await service.skip(me, b.roundId, { termId: 'bio-producer', idempotencyKey: key() });
+      expect((await service.finish(me, b.roundId, '2026-11-22')).dailyBonus).toBe(0);
+    });
+  });
+
   describe('practice (spaced repetition)', () => {
     it('serves what is due, most overdue first; right first time pushes a term out', async () => {
       const { service, repo } = setup();

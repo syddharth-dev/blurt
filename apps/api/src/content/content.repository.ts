@@ -16,6 +16,8 @@ export type SubjectRow = { id: string; name: string; color: string; topics: Topi
 export abstract class ContentRepository {
   /** Published topics a student may see: the shared library and topics assigned to their classes. */
   abstract visibleSubjects(userId: string): Promise<SubjectRow[]>;
+  /** Soonest due date per topic assigned to this student's classes (null: no due date). */
+  abstract assignedDue(userId: string): Promise<Map<string, Date | null>>;
   /** Terms mastered per topic for this user (review box ≥ MASTERED_BOX: right first time on two reviews). */
   abstract masteredByTopic(userId: string): Promise<Map<string, number>>;
 }
@@ -68,5 +70,21 @@ export class PrismaContentRepository extends ContentRepository {
     const counts = new Map<string, number>();
     for (const t of terms) counts.set(t.topicId, (counts.get(t.topicId) ?? 0) + 1);
     return counts;
+  }
+
+  async assignedDue(userId: string): Promise<Map<string, Date | null>> {
+    const rows = await this.db.classTopic.findMany({
+      where: {
+        class: { enrollments: { some: { studentId: userId } } },
+        topic: { status: 'PUBLISHED' },
+      },
+      select: { topicId: true, dueAt: true },
+    });
+    const due = new Map<string, Date | null>();
+    for (const r of rows) {
+      const prev = due.get(r.topicId);
+      if (prev === undefined || (r.dueAt && (!prev || r.dueAt < prev))) due.set(r.topicId, r.dueAt);
+    }
+    return due;
   }
 }

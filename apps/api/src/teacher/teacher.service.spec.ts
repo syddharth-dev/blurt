@@ -171,4 +171,11 @@ describe('TeacherService', () => {
     expect((await service.listTopics(t1)).topics).toEqual([]);
     expect(await code(service.updateTopic(t1, topicId, { title: 'x' }))).toBe('TOPIC_ARCHIVED');
   });
+
+  it('unlock levels can be set on library topics only', async () => {
+    const { service, repo, admin, t1, topicId } = await setup();
+    expect(await status(service.updateTopic(t1, topicId, { unlockLevel: 3 }))).toBe(400);
+    const lib = repo.seedTopic({ ownerId: 'library', visibility: 'LIBRARY', status: 'PUBLISHED' });
+    expect((await service.updateTopic(admin, lib, { unlockLevel: 3 })).unlockLevel).toBe(3);
+  });
 });

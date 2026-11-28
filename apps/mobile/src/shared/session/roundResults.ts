@@ -13,6 +13,8 @@ export type FinishedRound = {
   bestStreak: number;
   livesLeft: number;
   endedBy: 'complete' | 'out-of-lives' | 'quit';
+  /** Daily challenge bonus the server added (included in xpAfter) */
+  dailyBonus?: number;
   results: {
     termId: string;
     display: string;

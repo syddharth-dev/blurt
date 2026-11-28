@@ -29,6 +29,11 @@ type Props = {
 
 const PANEL_ICON = 46;
 
+const SUBJECT_NAMES: SubjectName[] = ['Chemistry', 'Biology', 'Physics', 'Earth & Space'];
+/** A subject name from the server, as one the card knows (unknown names use Chemistry's look). */
+export const asSubject = (name: string): SubjectName =>
+  SUBJECT_NAMES.includes(name as SubjectName) ? (name as SubjectName) : 'Chemistry';
+
 const SUBJECT_ICON: Record<SubjectName, (p: { color: string; size: number }) => ReactNode> = {
   Chemistry: (p) => <FlaskIcon {...p} />,
   Biology: (p) => <CellIcon {...p} />,

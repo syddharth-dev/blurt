@@ -37,6 +37,8 @@ export type RoundRecord = {
   userId: string;
   topicId: string | null;
   termIds: string[];
+  /** Started from the daily challenge card */
+  daily: boolean;
   /** The terms as served (null for rounds started before snapshots existed). */
   terms: RoundTerm[] | null;
   status: 'ACTIVE' | 'FINISHED';
@@ -76,6 +78,7 @@ export abstract class RoundsRepository {
     userId: string;
     topicId: string | null;
     terms: RoundTerm[];
+    daily?: boolean;
   }): Promise<RoundRecord>;
   abstract findRound(id: string): Promise<RoundRecord | null>;
   abstract findAttempt(
@@ -148,6 +151,7 @@ function toRound(r: Prisma.RoundGetPayload<{ include: typeof roundInclude }>): R
     userId: r.userId,
     topicId: r.topicId,
     termIds: r.termIds,
+    daily: r.daily,
     terms: (r.terms as RoundTerm[] | null) ?? null,
     status: r.status,
     lives: r.lives,
@@ -224,6 +228,7 @@ export class PrismaRoundsRepository extends RoundsRepository {
     userId: string;
     topicId: string | null;
     terms: RoundTerm[];
+    daily?: boolean;
   }) {
     return toRound(
       await this.db.round.create({

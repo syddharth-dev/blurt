@@ -72,6 +72,7 @@ model User {
   level        Int      @default(1)
   streak       Int      @default(0)
   lastPlayedOn String?            // local date "YYYY-MM-DD" on the student's phone (streaks)
+  lastDailyOn  String?            // local date the daily bonus was last earned (once a day)
   teaches      Class[]      @relation("ClassTeacher")
   enrollments  Enrollment[]
   topics       Topic[]
@@ -197,6 +198,7 @@ model Round {
   user      User     @relation(fields: [userId], references: [id])
   topicId   String?            // null for practice rounds (specific terms)
   classId   String?            // set when played as a class assignment
+  daily      Boolean     @default(false) // started from the daily challenge card
   termIds   String[]           // the terms served, in order
   terms     Json?              // snapshot of those terms as served, so edits mid-round don't change them
   status    RoundStatus @default(ACTIVE)
@@ -254,7 +256,7 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | POST | `/classes/join` | `{code}` → join a class (10 tries a minute) |
 | GET | `/classes` | My classes with their published assigned topics and due dates |
 | GET | `/subjects` | Subjects and topics the student can see, with lock and assignment state |
-| GET | `/daily` | Today's challenge (Phase 5; the app picks it locally for now) |
+| GET | `/daily` | `?localDate=YYYY-MM-DD` → today's challenge `{topic, bonusXp, done}` |
 | POST | `/rounds` | `{topicId}` or `{termIds}` (practice) → ordered terms **with their answers, variants and confusables**, pictures and highlights, and the round's budgets |
 | POST | `/rounds/:id/attempts` | `{termId, alternatives[], inputMode, hintsUsed, ms, idempotencyKey}` → verdict (re-checked on the server) |
 | POST | `/rounds/:id/skip` | `{termId, idempotencyKey}` → `{skipsLeft}` |
@@ -356,3 +358,8 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **Spaced repetition** (`nextReview` in `@blurt/shared/progress`): each term a student has played has a review **box** (0–5) in `TermMastery`. Finishing a round moves every term the student reached: right first time → up a box, due in 1, 3, 7, 14 or 30 days; right with help → same box, due tomorrow; missed or skipped → box 0, due now. `lastSeenAt` records the last round.
 - **Mastered** now means box ≥ 2 (`MASTERED_BOX`: right first time on two reviews), for topic progress bars and class topic cards. Before, one right answer counted. The migration put terms already answered right (with no misses) into box 1.
 - `GET /practice` lists due terms that are still published and visible to the student (`visibleTopic`), most overdue first. The app starts them as a normal practice round (`POST /rounds {termIds}`), and practice rounds move the boxes like any round.
+
+### Built in Phase 5 step 3 (decisions)
+- **Daily challenge** (`pickDaily` in `apps/api/src/content/daily.ts`): from the topics the student can play (visible, unlocked, with terms), a class topic due within 7 days comes first (soonest due date); otherwise the topics take turns, one per local day (the same for everyone who sees the same topics).
+- **Daily bonus:** `POST /rounds {topicId, daily: true}` marks the round (`Round.daily`). Finishing it with at least one right answer adds `DAILY_BONUS_XP` (150) once per local day (`User.lastDailyOn`). The summary reports it as `dailyBonus`, included in `xpAfter`. Any topic can be started as the daily round; since the bonus is once a day either way, the server doesn't check that it's the topic `/daily` picked. Offline rounds don't earn it.
+- **Unlock levels:** starter topics open gradually (`STARTER_UNLOCK_LEVELS`: 1, 1, 2, 2, 3, 3, 4), set by the seed for new databases and by a one-off migration for existing ones (only where the level was still 1). Admins change them on library topics in the topic editor (`unlockLevel` on `PATCH /teacher/topics/:id`; other topics get 400). Class topics are never locked.

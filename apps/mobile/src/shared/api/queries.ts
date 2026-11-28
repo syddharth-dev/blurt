@@ -11,6 +11,7 @@ export const queryKeys = {
   subjects: ['subjects'] as const,
   classes: ['classes'] as const,
   practice: ['practice'] as const,
+  daily: (localDate: string) => ['daily', localDate] as const,
 };
 
 /** The student's profile (XP, level, streak). Undefined until signed in and loaded. */
@@ -37,10 +38,21 @@ export function usePractice() {
   return useQuery({ queryKey: queryKeys.practice, queryFn: endpoints.practice, enabled: signedIn });
 }
 
+/** Today's challenge, picked by the server for the phone's local date. */
+export function useDaily(localDate: string) {
+  const signedIn = useAuth((s) => s.status === 'signedIn');
+  return useQuery({
+    queryKey: queryKeys.daily(localDate),
+    queryFn: () => endpoints.daily(localDate),
+    enabled: signedIn,
+  });
+}
+
 /** After a round, totals and mastery changed. */
 export function refreshProgress() {
   void queryClient.invalidateQueries({ queryKey: queryKeys.me });
   void queryClient.invalidateQueries({ queryKey: queryKeys.subjects });
   void queryClient.invalidateQueries({ queryKey: queryKeys.classes });
   void queryClient.invalidateQueries({ queryKey: queryKeys.practice });
+  void queryClient.invalidateQueries({ queryKey: ['daily'] });
 }

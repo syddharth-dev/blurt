@@ -79,6 +79,8 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 - Bars use one colour (violet), and each bar's value is also shown as text.
 - Code: `apps/dashboard/src/features/reports/`, `apps/api/src/reports/` (the maths is the pure `build-report.ts`).
 
+**Built (Phase 5, step 3):** on starter-library topics (which only admins can open), the topic editor has **Unlocks at level**. Class topics are never locked, so teachers' own topics don't show it.
+
 
 1. **Sign in** (Supabase Auth, same accounts as the app).
 2. **Overview**: my classes, recent activity, terms students miss most this week.

@@ -10,6 +10,7 @@ const user = {
   level: 1,
   streak: 2,
   lastPlayedOn: '2026-11-21',
+  lastDailyOn: null as string | null,
 };
 
 describe('ProgressService', () => {
@@ -33,5 +34,16 @@ describe('ProgressService', () => {
     expect(new ProgressService().afterRound(user, 50, '2026-11-20', true).lastPlayedOn).toBe(
       '2026-11-21',
     );
+  });
+
+  it('the daily bonus: a daily round with a right answer, once per local day', () => {
+    const p = new ProgressService();
+    expect(p.dailyBonus(user, true, true, '2026-11-22')).toBe(150);
+    expect(p.dailyBonus(user, false, true, '2026-11-22')).toBe(0); // not the daily round
+    expect(p.dailyBonus(user, true, false, '2026-11-22')).toBe(0); // nothing right
+    expect(p.dailyBonus({ ...user, lastDailyOn: '2026-11-22' }, true, true, '2026-11-22')).toBe(0);
+    const patch = p.afterRound(user, 100, '2026-11-22', true, 150);
+    expect(patch).toMatchObject({ xp: 730, lastDailyOn: '2026-11-22' });
+    expect(p.afterRound(user, 100, '2026-11-22', true)).not.toHaveProperty('lastDailyOn');
   });
 });

@@ -88,6 +88,10 @@ export class TeacherService {
     const topic = await this.ownTopic(auth, id);
     if (topic.status === 'ARCHIVED') throw this.archived();
     if (body.subjectId) await this.assertSubject(body.subjectId);
+    // Unlock levels are for the shared library: class topics are never locked.
+    if (body.unlockLevel !== undefined && topic.visibility !== 'LIBRARY') {
+      throw new BadRequestException('Only starter-library topics have an unlock level.');
+    }
     await this.repo.updateTopic(id, {
       ...body,
       ...(body.curriculumCode !== undefined ? { curriculumCode: body.curriculumCode || null } : {}),
@@ -333,6 +337,7 @@ export class TeacherService {
       grade: t.grade,
       curriculumCode: t.curriculumCode,
       status: t.status,
+      unlockLevel: t.unlockLevel,
       termCount: t.terms.length,
       termsNotReady: t.terms.filter((term) => this.checks(t, term).problems.length).length,
       classes: t.classes,

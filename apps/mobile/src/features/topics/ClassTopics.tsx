@@ -1,16 +1,11 @@
-import type { SubjectName } from '@blurt/shared/content';
 import { localDateOf } from '@blurt/shared/progress';
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { useClasses } from '@/shared/api';
 import { TextButton } from '@/shared/ui/TextButton';
-import { TopicCard } from '@/shared/ui/TopicCard';
+import { asSubject, TopicCard } from '@/shared/ui/TopicCard';
 import { colors, radius, space, surfaces, textStyle } from '@/theme';
 import { dueLabel } from './due';
-
-const SUBJECTS: SubjectName[] = ['Chemistry', 'Biology', 'Physics', 'Earth & Space'];
-const asSubject = (s: string): SubjectName =>
-  SUBJECTS.includes(s as SubjectName) ? (s as SubjectName) : 'Chemistry';
 
 /**
  * Topics from the student's classes, first on the Topics tab (SCREENS.md → "assigned topics

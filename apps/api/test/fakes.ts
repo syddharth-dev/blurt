@@ -87,6 +87,7 @@ export class FakeUsersRepository extends UsersRepository {
       level: 1,
       streak: 0,
       lastPlayedOn: null,
+      lastDailyOn: null,
     };
     this.users.set(u.id, u);
     return u;
@@ -143,15 +144,18 @@ export class FakeRoundsRepository extends RoundsRepository {
   }
   async createRound({
     terms,
+    daily = false,
     ...data
   }: {
     userId: string;
     topicId: string | null;
     terms: RoundTerm[];
+    daily?: boolean;
   }) {
     const r: RoundRecord = {
       id: `round-${this.nextId++}`,
       ...data,
+      daily,
       termIds: terms.map((t) => t.id),
       terms,
       status: 'ACTIVE',
@@ -229,6 +233,10 @@ export class FakeContentRepository extends ContentRepository {
   async masteredByTopic() {
     return this.mastered;
   }
+  due = new Map<string, Date | null>();
+  async assignedDue() {
+    return this.due;
+  }
 }
 
 // ── Teacher content ─────────────────────────────────────────────────────────
@@ -293,6 +301,7 @@ export class FakeTeacherContentRepository extends TeacherContentRepository {
       curriculumCode: null,
       status: 'DRAFT',
       visibility: 'CLASS',
+      unlockLevel: 1,
       classes: [],
       updatedAt: new Date(),
       ...data,

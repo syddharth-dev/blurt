@@ -81,7 +81,13 @@ export type SubjectsResponse = z.infer<typeof SubjectsResponse>;
 
 /** Start a round from a topic, or practise specific terms. */
 export const StartRound = z.union([
-  z.object({ topicId: z.string().min(1) }).strict(),
+  z
+    .object({
+      topicId: z.string().min(1),
+      /** Started from the daily challenge card: finishing it earns the daily bonus (once a day). */
+      daily: z.literal(true).optional(),
+    })
+    .strict(),
   z.object({ termIds: z.array(z.string().min(1)).min(1).max(20) }).strict(),
 ]);
 export type StartRound = z.infer<typeof StartRound>;
@@ -180,6 +186,8 @@ export const RoundSummaryResponse = z.object({
   streak: z.number().int(),
   bestStreak: z.number().int(),
   livesLeft: z.number().int(),
+  /** Daily challenge bonus included in xpAfter (0 if none). Older summaries don't have it. */
+  dailyBonus: z.number().int().default(0),
   endedBy: z.enum(['complete', 'out-of-lives', 'quit']),
   results: z.array(
     z.object({
@@ -244,7 +252,12 @@ export const CreateTopic = z
   .strict();
 export type CreateTopic = z.infer<typeof CreateTopic>;
 
-export const UpdateTopic = CreateTopic.partial().strict();
+export const UpdateTopic = CreateTopic.partial()
+  .extend({
+    /** Starter-library topics only: the level that unlocks the topic */
+    unlockLevel: z.number().int().min(1).max(50).optional(),
+  })
+  .strict();
 export type UpdateTopic = z.infer<typeof UpdateTopic>;
 
 /** What the teacher types for a term. Drafts may leave clue and fact blank. */
@@ -373,6 +386,8 @@ export const TeacherTopicSummary = z.object({
   grade: z.number().int(),
   curriculumCode: z.string().nullable(),
   status: Status,
+  /** Level that unlocks it for students (library topics; class topics are never locked) */
+  unlockLevel: z.number().int(),
   termCount: z.number().int(),
   /** Terms with problems that block publishing */
   termsNotReady: z.number().int(),
@@ -448,6 +463,31 @@ export const MatchTestResult = z.object({
   strategy: z.enum(['confusable', 'exact', 'family', 'phonetic', 'near', 'none']),
 });
 export type MatchTestResult = z.infer<typeof MatchTestResult>;
+
+// ── /daily ───────────────────────────────────────────────────────────────────
+
+/** GET /daily?localDate=YYYY-MM-DD: today's challenge, picked by the server. */
+export const DailyResponse = z.object({
+  localDate: LocalDate,
+  /** Null when the student can't see any playable topic */
+  topic: z
+    .object({
+      id: z.string(),
+      title: z.string(),
+      subject: z.string(),
+      grade: z.number().int(),
+      termCount: z.number().int(),
+      /** Picked because it's due soon for a class */
+      dueOn: LocalDate.nullable(),
+    })
+    .nullable(),
+  bonusXp: z.number().int(),
+  /** The bonus was already earned today */
+  done: z.boolean(),
+});
+export type DailyResponse = z.infer<typeof DailyResponse>;
+
+export const DailyQuery = z.object({ localDate: LocalDate });
 
 // ── /practice ────────────────────────────────────────────────────────────────
 

@@ -14,6 +14,7 @@ export type TopicRecord = {
   curriculumCode: string | null;
   status: Status;
   visibility: Visibility;
+  unlockLevel: number;
   classes: string[];
   updatedAt: Date;
 };
@@ -76,6 +77,7 @@ export abstract class TeacherContentRepository {
       grade: number;
       curriculumCode: string | null;
       status: Status;
+      unlockLevel: number;
     }>,
   ): Promise<void>;
   /** Copies the topic and its live terms as drafts (version 1) for a new owner. */
@@ -165,6 +167,7 @@ function toTopic(t: TopicRow): TopicWithTerms {
     curriculumCode: t.curriculumCode,
     status: t.status,
     visibility: t.visibility,
+    unlockLevel: t.unlockLevel,
     classes: t.classes.map((c) => c.class.name),
     updatedAt: t.updatedAt,
     terms: t.terms.map(toTerm),

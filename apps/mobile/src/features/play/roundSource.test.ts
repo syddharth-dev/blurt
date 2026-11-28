@@ -122,4 +122,10 @@ describe('roundSource', () => {
       message: "You're offline. Topics from your class need a connection.",
     });
   });
+
+  it('a round from the daily card asks the server with the daily flag', async () => {
+    mockStartRound.mockResolvedValue(started);
+    await loadRound('atoms-and-ions', undefined, true, true);
+    expect(mockStartRound).toHaveBeenLastCalledWith({ topicId: 'atoms-and-ions', daily: true });
+  });
 });

@@ -19,6 +19,8 @@ type Props = {
   terms: number;
   timeLeft: string;
   bonusXp: number;
+  /** Today's bonus is already earned: the card says so, and it can still be played. */
+  done?: boolean;
   onPlay: () => void;
 };
 
@@ -26,27 +28,31 @@ type Props = {
  * Daily challenge card (SCREENS.md → Home): coral "Daily · 6h left" tag, topic title, chips,
  * a fanned stack of three mini picture cards (the front one shows "?"), and "Let's blurt".
  */
-export function DailyCard({ title, terms, timeLeft, bonusXp, onPlay }: Props) {
+export function DailyCard({ title, terms, timeLeft, bonusXp, done = false, onPlay }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.top}>
         <View style={styles.info}>
           <View style={styles.tag}>
             <ClockIcon color={colors.coralInk} />
-            <Text style={styles.tagText}>{`Daily · ${timeLeft}`.toUpperCase()}</Text>
+            <Text style={styles.tagText}>
+              {(done ? 'Daily · done today' : `Daily · ${timeLeft}`).toUpperCase()}
+            </Text>
           </View>
           <Text style={styles.title}>{title}</Text>
           <View style={styles.chips}>
             <Text style={[styles.chip, styles.chipViolet]}>{terms} terms</Text>
             <Text style={[styles.chip, styles.chipViolet]}>Grade 8</Text>
-            <Text style={[styles.chip, styles.chipSunny]}>+{bonusXp} XP</Text>
+            <Text style={[styles.chip, styles.chipSunny]}>
+              {done ? 'Bonus earned' : `+${bonusXp} XP`}
+            </Text>
           </View>
         </View>
         <Fan />
       </View>
       <PrimaryButton
-        breathe
-        label="Let's blurt"
+        breathe={!done}
+        label={done ? 'Play again' : "Let's blurt"}
         icon={<MicIcon color={colors.night} size={22} />}
         accessibilityHint={`Starts today's challenge: ${title}`}
         onPress={onPlay}

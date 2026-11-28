@@ -1,9 +1,10 @@
 import { GRADE8_TERMS, topicsOf } from '@blurt/shared/content';
+import { DAILY_BONUS_XP, localDateOf } from '@blurt/shared/progress';
 import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePractice } from '@/shared/api';
+import { useDaily, usePractice, useSubjects } from '@/shared/api';
 import { useAuth } from '@/shared/auth/session';
 import { useProgress } from '@/shared/progress/useProgress';
 import { SceneBackground } from '@/shared/scene';
@@ -13,11 +14,18 @@ import { DailyCard } from './components/DailyCard';
 import { PracticeCard } from './components/PracticeCard';
 import { PipGreeting } from '@/shared/ui/PipGreeting';
 import { TopBar } from './components/TopBar';
-import { TopicsRow } from './components/TopicsRow';
+import { TopicsRow, type HomeTopic } from './components/TopicsRow';
 import { Wordmark } from '@/shared/ui/Wordmark';
-import { DAILY_BONUS_XP, dailyTopic, timeLeftLabel } from './daily';
+import { asSubject } from '@/shared/ui/TopicCard';
+import { dailyTopic, timeLeftLabel } from './daily';
 
 const TOPICS = topicsOf(GRADE8_TERMS);
+const BUNDLED: HomeTopic[] = TOPICS.map((t) => ({
+  id: t.id,
+  title: t.title,
+  subject: t.subject,
+  total: t.terms.length,
+}));
 
 /**
  * Home (SCREENS.md → 1. Home; design canvas → 1 · Home). Streak and topic progress come from
@@ -25,11 +33,37 @@ const TOPICS = topicsOf(GRADE8_TERMS);
  */
 export function HomeScreen() {
   const now = useMemo(() => new Date(), []);
-  const today = dailyTopic(TOPICS, now);
   const progress = useProgress();
   // Signed in implies online settings (there's no sign-in without them).
   const online = useAuth((s) => s.status === 'signedIn');
   const practice = usePractice().data;
+  const daily = useDaily(localDateOf(now)).data;
+  const subjects = useSubjects().data;
+
+  // Signed in: the server's topics (class topics first). Offline: the bundled starter set.
+  const topics: HomeTopic[] = subjects
+    ? subjects.subjects
+        .flatMap((s) =>
+          s.topics.map((t) => ({
+            id: t.id,
+            title: t.title,
+            subject: asSubject(s.name),
+            total: t.termCount,
+            assigned: t.assigned,
+          })),
+        )
+        .sort((a, b) => Number(b.assigned) - Number(a.assigned))
+    : BUNDLED;
+  // Today's challenge: picked by the server when signed in, else on the phone.
+  const local = dailyTopic(TOPICS, now);
+  const today =
+    online && daily
+      ? daily.topic
+        ? { id: daily.topic.id, title: daily.topic.title, terms: daily.topic.termCount }
+        : null
+      : local
+        ? { id: local.id, title: local.title, terms: local.terms.length }
+        : null;
 
   return (
     <SceneBackground variant="day" atoms={2} sparkles={5}>
@@ -46,10 +80,11 @@ export function HomeScreen() {
           {today ? (
             <DailyCard
               title={today.title}
-              terms={today.terms.length}
+              terms={today.terms}
               timeLeft={timeLeftLabel(now)}
-              bonusXp={DAILY_BONUS_XP}
-              onPlay={() => router.push(`/play/${today.id}`)}
+              bonusXp={daily?.bonusXp ?? DAILY_BONUS_XP}
+              done={daily?.done}
+              onPlay={() => router.push(`/play/${today.id}?daily=1`)}
             />
           ) : null}
           {online && practice && practice.dueCount > 0 ? (
@@ -59,7 +94,7 @@ export function HomeScreen() {
             />
           ) : null}
           <TopicsRow
-            topics={TOPICS}
+            topics={topics}
             todayId={today?.id}
             mastered={progress.mastered}
             lockedAt={progress.lockedAt}

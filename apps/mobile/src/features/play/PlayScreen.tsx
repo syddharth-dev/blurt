@@ -54,8 +54,17 @@ const SPEECH_LANG = 'en-US';
 export { MIX_TOPIC_ID, PRACTICE_TOPIC_ID } from './roundSource';
 const SUNBURST = sizes.pictureCard * 1.52;
 
-export function PlayScreen({ topicId, termIds }: { topicId: string; termIds?: string[] }) {
-  const load = useRoundLoad(topicId, termIds);
+export function PlayScreen({
+  topicId,
+  termIds,
+  daily = false,
+}: {
+  topicId: string;
+  termIds?: string[];
+  /** Started from the daily challenge card (the server awards the daily bonus once a day). */
+  daily?: boolean;
+}) {
+  const load = useRoundLoad(topicId, termIds, daily);
   if (load.status === 'loading') {
     return (
       <Placeholder title="One sec." body="Getting your round ready…">
@@ -199,6 +208,7 @@ function RoundView({ round }: { round: RoundSetup }) {
             livesLeft: server.livesLeft,
             endedBy: server.endedBy,
             results: server.results,
+            dailyBonus: server.dailyBonus,
           },
           { before: server.xpBefore, after: server.xpAfter },
         );

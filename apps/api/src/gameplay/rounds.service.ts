@@ -56,6 +56,7 @@ export class RoundsService {
         userId: user.id,
         topicId: found.topic.id,
         terms,
+        daily: body.daily === true,
       });
       return this.started(
         round.id,
@@ -205,7 +206,9 @@ export class RoundsService {
     const endedBy =
       round.lives <= 0 ? 'out-of-lives' : resolved === round.termIds.length ? 'complete' : 'quit';
     const played = round.attempts.some((a) => a.verdict !== 'skipped');
-    const patch = this.progress.afterRound(user, round.score, localDate, played);
+    const anyRight = results.some((r) => r.outcome === 'first-try' || r.outcome === 'assisted');
+    const dailyBonus = this.progress.dailyBonus(user, round.daily, anyRight, localDate);
+    const patch = this.progress.afterRound(user, round.score, localDate, played, dailyBonus);
     const summary: RoundSummaryResponse = {
       roundId: round.id,
       score: round.score,
@@ -216,6 +219,7 @@ export class RoundsService {
       streak: patch.streak,
       bestStreak: round.bestStreak,
       livesLeft: round.lives,
+      dailyBonus,
       endedBy,
       results,
     };

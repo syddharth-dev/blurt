@@ -108,12 +108,12 @@ export function fromServer(started: RoundStarted, topicId: string, termIds?: str
 }
 
 /** What to ask the server for: a topic, or specific terms (practice, and the local daily mix). */
-function startRequest(topicId: string, termIds?: string[]) {
+function startRequest(topicId: string, termIds?: string[], daily = false) {
   if (topicId === PRACTICE_TOPIC_ID) return termIds?.length ? { termIds } : null;
   if (topicId === MIX_TOPIC_ID) {
     return { termIds: mixedRound(GRADE8_TERMS, ROUND_RULES.termsPerRound).map((t) => t.id) };
   }
-  return { topicId };
+  return daily ? { topicId, daily: true as const } : { topicId };
 }
 
 /**
@@ -124,6 +124,7 @@ export async function loadRound(
   topicId: string,
   termIds?: string[],
   online = true,
+  daily = false,
 ): Promise<RoundLoad> {
   const offline = (noConnection = false): RoundLoad => {
     const r = localRound(topicId, termIds);
@@ -136,7 +137,7 @@ export async function loadRound(
         : "That topic isn't here. Pick another one from Home.",
     };
   };
-  const request = startRequest(topicId, termIds);
+  const request = startRequest(topicId, termIds, daily);
   if (!online || !request) return offline();
   try {
     return {
@@ -156,7 +157,7 @@ export async function loadRound(
   }
 }
 
-export function useRoundLoad(topicId: string, termIds?: string[]): RoundLoad {
+export function useRoundLoad(topicId: string, termIds?: string[], daily = false): RoundLoad {
   const signedIn = useAuth((s) => s.status === 'signedIn');
   const [load, setLoad] = useState<RoundLoad>({ status: 'loading' });
   const key = termIds?.join(',');
@@ -166,10 +167,11 @@ export function useRoundLoad(topicId: string, termIds?: string[]): RoundLoad {
       topicId,
       key ? key.split(',') : undefined,
       signedIn && isOnlineConfigured(),
+      daily,
     ).then((r) => alive && setLoad(r));
     return () => {
       alive = false;
     };
-  }, [topicId, key, signedIn]);
+  }, [topicId, key, signedIn, daily]);
   return load;
 }

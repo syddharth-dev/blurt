@@ -60,6 +60,7 @@ model User {
   level        Int      @default(1)
   streak       Int      @default(0)
   lastPlayedOn String?            // local date "YYYY-MM-DD" on the student's phone (streaks)
+  lastDailyOn  String?            // local date the daily bonus was last earned (once a day)
   teaches      Class[]      @relation("ClassTeacher")
   enrollments  Enrollment[]
   topics       Topic[]
@@ -184,6 +185,7 @@ model Round {
   user      User     @relation(fields: [userId], references: [id])
   topicId   String?            // null for practice rounds (specific terms)
   classId   String?            // set when played as a class assignment
+  daily      Boolean     @default(false) // started from the daily challenge card
   termIds   String[]           // the terms served, in order
   terms     Json?              // snapshot of those terms as served, so edits mid-round don't change them
   status    RoundStatus @default(ACTIVE)

@@ -12,6 +12,8 @@ export type UserRecord = {
   level: number;
   streak: number;
   lastPlayedOn: string | null;
+  /** Local date the daily bonus was last earned */
+  lastDailyOn: string | null;
 };
 
 export type NewUser = { id: string; name: string; email?: string | null; role?: Role };
@@ -36,6 +38,7 @@ const select = {
   level: true,
   streak: true,
   lastPlayedOn: true,
+  lastDailyOn: true,
 } as const;
 
 @Injectable()

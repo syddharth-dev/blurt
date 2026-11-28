@@ -13,6 +13,19 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@/shared/api/endpoints', () => ({
   endpoints: {
+    daily: jest.fn(async (localDate: string) => ({
+      localDate,
+      topic: {
+        id: 'atoms-and-ions',
+        title: 'Atoms and ions',
+        subject: 'Chemistry',
+        grade: 8,
+        termCount: 7,
+        dueOn: null,
+      },
+      bonusXp: 150,
+      done: true,
+    })),
     practice: jest.fn(async () => ({
       dueCount: 3,
       termIds: ['chem-proton', 'bio-gene', 'phys-inertia'],
@@ -97,7 +110,7 @@ describe('HomeScreen', () => {
     await render(<HomeScreen />);
     const today = dailyTopic(topics, new Date())!;
     await fireEvent.press(screen.getByText("Let's blurt"));
-    expect(router.push).toHaveBeenCalledWith(`/play/${today.id}`);
+    expect(router.push).toHaveBeenCalledWith(`/play/${today.id}?daily=1`);
     await fireEvent.press(screen.getByText('See all'));
     expect(router.push).toHaveBeenCalledWith('/topics');
   });
@@ -124,5 +137,13 @@ describe('HomeScreen', () => {
   it('no practice card when signed out', async () => {
     await render(<HomeScreen />);
     expect(screen.queryByText(/back for review/)).toBeNull();
+  });
+
+  it("signed in: the server picks today's challenge; once the bonus is earned it says so", async () => {
+    useAuth.setState({ status: 'signedIn' });
+    await render(<HomeScreen />);
+    expect(await screen.findByText('Bonus earned')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByText('Play again'));
+    expect(router.push).toHaveBeenCalledWith('/play/atoms-and-ions?daily=1');
   });
 });

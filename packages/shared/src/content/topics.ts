@@ -40,3 +40,17 @@ export function mixedRound(
   }
   return pool.slice(0, count);
 }
+
+/**
+ * Starter topics unlock gradually (Phase 5): two at level 1, then more as students level up.
+ * The seed uses these for new databases; admins can change them in the dashboard afterwards.
+ */
+export const STARTER_UNLOCK_LEVELS: Readonly<Record<string, number>> = {
+  'atoms-and-ions': 1,
+  'cells-and-heredity': 1,
+  ecosystems: 2,
+  'forces-and-motion': 2,
+  'energy-light-and-sound': 3,
+  'earthquakes-and-weather': 3,
+  'the-solar-system': 4,
+};

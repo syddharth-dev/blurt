@@ -84,7 +84,17 @@ export function SummaryScreen({ roundId }: { roundId: string }) {
             </View>
           </View>
 
-          <XpBar level={after.level} gained={round.score} from={before} to={after} />
+          <XpBar
+            level={after.level}
+            gained={round.score + (round.dailyBonus ?? 0)}
+            from={before}
+            to={after}
+          />
+          {round.dailyBonus ? (
+            <Text style={styles.bonus} accessibilityRole="text">
+              Daily challenge done · +{round.dailyBonus} bonus XP
+            </Text>
+          ) : null}
 
           <View style={styles.stats}>
             <Stat value={s.firstTry} label="First try" color={colors.violet} />
@@ -254,6 +264,16 @@ const styles = StyleSheet.create({
     gap: space.s8,
   },
   xpRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  bonus: {
+    ...textStyle('chip'),
+    alignSelf: 'center',
+    color: colors.sunnyInk,
+    backgroundColor: colors.sunnyTint,
+    borderRadius: radius.chip,
+    paddingHorizontal: space.s12,
+    paddingVertical: space.s6,
+    overflow: 'hidden',
+  },
   xpText: { ...textStyle('chip'), color: colors.white },
   xpTrack: {
     height: XP_TRACK,

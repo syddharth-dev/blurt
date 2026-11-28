@@ -94,6 +94,7 @@ function Details({ topic }: { topic: TeacherTopicDetail }) {
       subjectId: topic.subject.id,
       grade: topic.grade,
       curriculumCode: topic.curriculumCode ?? '',
+      ...(topic.library ? { unlockLevel: topic.unlockLevel } : {}),
     },
   });
   const errors = form.formState.errors;
@@ -129,6 +130,19 @@ function Details({ topic }: { topic: TeacherTopicDetail }) {
             ))}
           </Select>
         </Field>
+        {topic.library ? (
+          <Field
+            label="Unlocks at level"
+            hint="Starter library only. Class topics are never locked."
+          >
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              {...form.register('unlockLevel', { valueAsNumber: true })}
+            />
+          </Field>
+        ) : null}
         <div className="md:col-span-2">
           <Field label="Curriculum code (optional)">
             <Input autoComplete="off" {...form.register('curriculumCode')} />

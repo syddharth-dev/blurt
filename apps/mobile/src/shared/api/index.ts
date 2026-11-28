@@ -5,6 +5,7 @@ export {
   queryKeys,
   refreshProgress,
   useClasses,
+  useDaily,
   useMe,
   usePractice,
   useSubjects,

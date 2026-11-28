@@ -5,7 +5,13 @@
  */
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { DIAGRAMS, GRADE8_TERMS, topicsOf, topicSlug } from '@blurt/shared/content';
+import {
+  DIAGRAMS,
+  GRADE8_TERMS,
+  STARTER_UNLOCK_LEVELS,
+  topicsOf,
+  topicSlug,
+} from '@blurt/shared/content';
 import { subjectColors } from '@blurt/shared/theme';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 
@@ -67,6 +73,8 @@ async function main() {
         grade: 8,
         status: 'PUBLISHED',
         visibility: 'LIBRARY',
+        // Only on create: admins may change unlock levels later, and a re-run keeps them.
+        unlockLevel: STARTER_UNLOCK_LEVELS[topic.id] ?? 1,
       },
     });
 

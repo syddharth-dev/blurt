@@ -1,10 +1,13 @@
-import type { LocalTopic } from '@blurt/shared/content';
+import type { SubjectName } from '@blurt/shared/content';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { TopicCard } from '@/shared/ui/TopicCard';
 import { colors, sizes, space, textStyle } from '@/theme';
 
+/** A topic on Home: from the server when signed in, or the bundled starter set offline. */
+export type HomeTopic = { id: string; title: string; subject: SubjectName; total: number };
+
 type Props = {
-  topics: readonly LocalTopic[];
+  topics: readonly HomeTopic[];
   todayId?: string;
   mastered: (topicId: string) => number;
   lockedAt?: (topicId: string) => number | undefined;
@@ -40,7 +43,7 @@ export function TopicsRow({ topics, todayId, mastered, lockedAt, onOpen, onSeeAl
             title={t.title}
             subject={t.subject}
             mastered={mastered(t.id)}
-            total={t.terms.length}
+            total={t.total}
             today={t.id === todayId}
             lockedAtLevel={lockedAt?.(t.id)}
             onPress={() => onOpen(t.id)}
