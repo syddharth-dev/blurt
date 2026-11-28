@@ -1,6 +1,7 @@
 import {
   AttemptResponse,
   JoinClassResult,
+  PracticeResponse,
   StudentClasses,
   Me,
   RoundStarted,
@@ -19,6 +20,7 @@ export const endpoints = {
   updateMe: (body: UpdateMe) => api('/me', { method: 'PATCH', body, schema: Me }),
   subjects: () => api('/subjects', { schema: SubjectsResponse }),
   classes: () => api('/classes', { schema: StudentClasses }),
+  practice: () => api('/practice', { schema: PracticeResponse }),
   joinClass: (code: string) =>
     api('/classes/join', { method: 'POST', body: { code }, schema: JoinClassResult }),
   startRound: (body: StartRound) => api('/rounds', { method: 'POST', body, schema: RoundStarted }),

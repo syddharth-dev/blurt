@@ -221,7 +221,9 @@ model TermMastery {
   termId  String
   correct Int      @default(0)
   missed  Int      @default(0)
-  dueAt   DateTime
+  dueAt   DateTime               // next review (spaced repetition)
+  box     Int      @default(0)   // review box 0–5 (REVIEW_INTERVAL_DAYS); mastered from box 2
+  lastSeenAt DateTime?
   user    User     @relation(fields: [userId], references: [id])
   @@id([userId, termId])
 }

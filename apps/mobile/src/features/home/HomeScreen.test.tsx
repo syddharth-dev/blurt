@@ -13,6 +13,11 @@ jest.mock('expo-router', () => ({
 
 jest.mock('@/shared/api/endpoints', () => ({
   endpoints: {
+    practice: jest.fn(async () => ({
+      dueCount: 3,
+      termIds: ['chem-proton', 'bio-gene', 'phys-inertia'],
+      nextDueAt: null,
+    })),
     me: jest.fn(async () => ({
       id: 'u1',
       name: 'Ana',
@@ -104,5 +109,20 @@ describe('HomeScreen', () => {
     expect(screen.getByText('A')).toBeOnTheScreen();
     expect(screen.getByLabelText(/^Atoms and ions, Chemistry, 3 of 7 mastered/)).toBeOnTheScreen();
     expect(screen.getByLabelText('The solar system, unlocks at level 4')).toBeOnTheScreen();
+  });
+
+  it('offers practice when terms are due, starting exactly those terms', async () => {
+    useAuth.setState({ status: 'signedIn' });
+    await render(<HomeScreen />);
+    const card = await screen.findByLabelText('Practice. 3 terms are back for review.');
+    await fireEvent.press(card);
+    expect(router.push).toHaveBeenCalledWith(
+      '/play/practice?ids=chem-proton,bio-gene,phys-inertia',
+    );
+  });
+
+  it('no practice card when signed out', async () => {
+    await render(<HomeScreen />);
+    expect(screen.queryByText(/back for review/)).toBeNull();
   });
 });

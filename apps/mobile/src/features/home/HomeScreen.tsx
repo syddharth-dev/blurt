@@ -3,11 +3,14 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePractice } from '@/shared/api';
+import { useAuth } from '@/shared/auth/session';
 import { useProgress } from '@/shared/progress/useProgress';
 import { SceneBackground } from '@/shared/scene';
 import { TAB_BAR_SPACE } from '@/shared/ui/TabBar';
 import { space } from '@/theme';
 import { DailyCard } from './components/DailyCard';
+import { PracticeCard } from './components/PracticeCard';
 import { PipGreeting } from '@/shared/ui/PipGreeting';
 import { TopBar } from './components/TopBar';
 import { TopicsRow } from './components/TopicsRow';
@@ -24,6 +27,9 @@ export function HomeScreen() {
   const now = useMemo(() => new Date(), []);
   const today = dailyTopic(TOPICS, now);
   const progress = useProgress();
+  // Signed in implies online settings (there's no sign-in without them).
+  const online = useAuth((s) => s.status === 'signedIn');
+  const practice = usePractice().data;
 
   return (
     <SceneBackground variant="day" atoms={2} sparkles={5}>
@@ -44,6 +50,12 @@ export function HomeScreen() {
               timeLeft={timeLeftLabel(now)}
               bonusXp={DAILY_BONUS_XP}
               onPlay={() => router.push(`/play/${today.id}`)}
+            />
+          ) : null}
+          {online && practice && practice.dueCount > 0 ? (
+            <PracticeCard
+              dueCount={practice.dueCount}
+              onPractise={() => router.push(`/play/practice?ids=${practice.termIds.join(',')}`)}
             />
           ) : null}
           <TopicsRow

@@ -72,3 +72,39 @@ export function localDateOf(now: Date): LocalDateString {
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
+
+// ── Spaced repetition (Phase 5) ─────────────────────────────────────────────
+
+/**
+ * Review boxes (a Leitner schedule). Each term a student has played sits in a box; the box sets
+ * when it's due again. Box 0 is due today.
+ *   right first time → up a box (due in 1, 3, 7, 14, then 30 days)
+ *   right with help  → same box, due tomorrow
+ *   missed / skipped → back to box 0, due now
+ */
+export const REVIEW_INTERVAL_DAYS = [0, 1, 3, 7, 14, 30] as const;
+export const MAX_BOX = REVIEW_INTERVAL_DAYS.length - 1;
+/** A term counts as mastered from this box: right first time on two separate reviews. */
+export const MASTERED_BOX = 2;
+/** At most this many terms in one practice round. */
+export const PRACTICE_ROUND_SIZE = ROUND_RULES.termsPerRound;
+
+export type ReviewOutcome = 'first-try' | 'assisted' | 'missed' | 'skipped';
+
+const DAY_MS = 86_400_000;
+
+export function nextReview(
+  box: number | null,
+  outcome: ReviewOutcome,
+  now: Date,
+): { box: number; dueAt: Date } {
+  const current = Math.min(Math.max(box ?? 0, 0), MAX_BOX);
+  if (outcome === 'first-try') {
+    const next = Math.min(current + 1, MAX_BOX);
+    return { box: next, dueAt: new Date(now.getTime() + REVIEW_INTERVAL_DAYS[next]! * DAY_MS) };
+  }
+  if (outcome === 'assisted') return { box: current, dueAt: new Date(now.getTime() + DAY_MS) };
+  return { box: 0, dueAt: now };
+}
+
+export const isMastered = (box: number) => box >= MASTERED_BOX;

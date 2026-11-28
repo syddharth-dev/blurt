@@ -234,7 +234,9 @@ model TermMastery {
   termId  String
   correct Int      @default(0)
   missed  Int      @default(0)
-  dueAt   DateTime
+  dueAt   DateTime               // next review (spaced repetition)
+  box     Int      @default(0)   // review box 0–5 (REVIEW_INTERVAL_DAYS); mastered from box 2
+  lastSeenAt DateTime?
   user    User     @relation(fields: [userId], references: [id])
   @@id([userId, termId])
 }
@@ -257,7 +259,7 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | POST | `/rounds/:id/attempts` | `{termId, alternatives[], inputMode, hintsUsed, ms, idempotencyKey}` → verdict (re-checked on the server) |
 | POST | `/rounds/:id/skip` | `{termId, idempotencyKey}` → `{skipsLeft}` |
 | POST | `/rounds/:id/finish` | `{localDate}` → summary (XP, level, streak, results); idempotent |
-| GET | `/practice` | Terms due for review |
+| GET | `/practice` | Terms due for review: `{dueCount, termIds (≤ 10, most overdue first), nextDueAt}` |
 | GET | `/leagues/current` | Weekly league |
 
 ### Teacher (dashboard)
@@ -349,3 +351,8 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **Report scope:** attempts by students enrolled in the class, on terms (any status) from topics assigned to it, in any kind of round. Answers = attempts with verdict correct, close or wrong; misses = close + wrong + skipped; accuracy = correct ÷ answers (null without answers). "What they said" is the recognizer's first alternative (or the typed text), normalized like the matcher does, counted, top 5.
 - **Access:** only the class's teacher or an admin (`ClassesService.access`): another teacher gets 403, a student who isn't in the class 404 (tested). Ranges are `7d` (default), `30d` and `all`; anything else is 400.
 - The numbers are computed in the API from the attempt rows (`build-report.ts`). That's fine for classes of this size. If it gets slow, add a daily summary table.
+
+### Built in Phase 5 step 2 (decisions)
+- **Spaced repetition** (`nextReview` in `@blurt/shared/progress`): each term a student has played has a review **box** (0–5) in `TermMastery`. Finishing a round moves every term the student reached: right first time → up a box, due in 1, 3, 7, 14 or 30 days; right with help → same box, due tomorrow; missed or skipped → box 0, due now. `lastSeenAt` records the last round.
+- **Mastered** now means box ≥ 2 (`MASTERED_BOX`: right first time on two reviews), for topic progress bars and class topic cards. Before, one right answer counted. The migration put terms already answered right (with no misses) into box 1.
+- `GET /practice` lists due terms that are still published and visible to the student (`visibleTopic`), most overdue first. The app starts them as a normal practice round (`POST /rounds {termIds}`), and practice rounds move the boxes like any round.

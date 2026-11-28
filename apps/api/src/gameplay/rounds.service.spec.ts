@@ -58,6 +58,30 @@ describe('RoundsService', () => {
     expect(repo.attempts.get([...repo.attempts.keys()].at(-1)!)?.termVersion).toBe(1);
   });
 
+  describe('practice (spaced repetition)', () => {
+    it('serves what is due, most overdue first; right first time pushes a term out', async () => {
+      const { service, repo } = setup();
+      expect(await service.practice(me)).toEqual({ dueCount: 0, termIds: [], nextDueAt: null });
+
+      const a = await service.start(me, { topicId: 'ecosystems' });
+      await service.attempt(me, a.roundId, say('bio-producer', 'producer')); // first try
+      await service.attempt(me, a.roundId, say('bio-consumer', 'producer')); // confusable
+      await service.finish(me, a.roundId, '2026-11-22');
+
+      // The miss is due now; the first-try term comes back tomorrow.
+      const due = await service.practice(me);
+      expect(due).toMatchObject({ dueCount: 1, termIds: ['bio-consumer'] });
+
+      const p = await service.start(me, { termIds: due.termIds });
+      await service.attempt(me, p.roundId, say('bio-consumer', 'consumer'));
+      await service.finish(me, p.roundId, '2026-11-22');
+      const after = await service.practice(me);
+      expect(after.dueCount).toBe(0);
+      expect(after.nextDueAt).not.toBeNull();
+      expect(repo.reviews.get(`${me.id}:bio-producer`)?.box).toBe(1);
+    });
+  });
+
   describe('start', () => {
     it('serves a topic with answers, picture data and the round budgets', async () => {
       const { service } = setup();
@@ -229,9 +253,11 @@ describe('RoundsService', () => {
         streak: 5,
         lastPlayedOn: '2026-11-22',
       });
+      // Every term reached moves in the review schedule, skips included.
       expect(repo.finishes[0]?.mastery).toEqual([
-        { termId: 'bio-producer', correct: 1, missed: 0 },
-        { termId: 'bio-consumer', correct: 1, missed: 0 },
+        { termId: 'bio-producer', outcome: 'first-try', correct: 1, missed: 0 },
+        { termId: 'bio-consumer', outcome: 'assisted', correct: 1, missed: 0 },
+        { termId: 'bio-decomposer', outcome: 'skipped', correct: 0, missed: 1 },
       ]);
     });
 

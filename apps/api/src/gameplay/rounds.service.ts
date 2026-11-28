@@ -1,10 +1,11 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { matchAnswer } from '@blurt/shared/matcher';
-import { levelFor, ROUND_RULES, xpFor } from '@blurt/shared/progress';
+import { levelFor, PRACTICE_ROUND_SIZE, ROUND_RULES, xpFor } from '@blurt/shared/progress';
 import {
   ERROR_CODES,
   type AttemptRequest,
   type AttemptResponse,
+  type PracticeResponse,
   type RoundStarted,
   type RoundSummaryResponse,
   type SkipRequest,
@@ -196,8 +197,8 @@ export class RoundsService {
         hintsUsed,
         heard: attempts.filter((a) => a.verdict !== 'skipped').map((a) => a.input[0] ?? ''),
       });
-      if (correct || misses)
-        mastery.push({ termId, correct: correct ? 1 : 0, missed: correct ? 0 : 1 });
+      // Every term the student reached moves in the review schedule, skips included.
+      mastery.push({ termId, outcome, correct: correct ? 1 : 0, missed: correct ? 0 : 1 });
     }
 
     const resolved = results.filter((r) => r.outcome !== 'missed').length;
@@ -229,6 +230,17 @@ export class RoundsService {
     // Another request finished it first: return what that one stored.
     const stored = (await this.repo.findRound(round.id))?.summary;
     return stored ?? summary;
+  }
+
+  /** Terms due for review (spaced repetition). The app starts them with POST /rounds {termIds}. */
+  async practice(auth: AuthUser): Promise<PracticeResponse> {
+    const user = await this.users.ensure(auth);
+    const due = await this.repo.dueTerms(user.id, new Date(), PRACTICE_ROUND_SIZE);
+    return {
+      dueCount: due.dueCount,
+      termIds: due.termIds,
+      nextDueAt: due.nextDueAt ? due.nextDueAt.toISOString() : null,
+    };
   }
 
   // ── helpers ────────────────────────────────────────────────────────────────

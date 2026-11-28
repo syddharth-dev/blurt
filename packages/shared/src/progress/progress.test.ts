@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { levelFor, localDateOf, nextStreak, starsFor, xpFor, XP_PER_LEVEL } from './index.js';
+import {
+  levelFor,
+  localDateOf,
+  nextStreak,
+  starsFor,
+  xpFor,
+  XP_PER_LEVEL,
+  nextReview,
+  isMastered,
+  MAX_BOX,
+} from './index.js';
 
 describe('levelFor', () => {
   it('starts at level 1 and goes up every 500 XP', () => {
@@ -56,5 +66,39 @@ describe('nextStreak', () => {
 
   it('formats the local date', () => {
     expect(localDateOf(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
+  });
+});
+
+describe('nextReview (spaced repetition)', () => {
+  const now = new Date('2026-11-28T10:00:00Z');
+  const days = (d: Date) => (d.getTime() - now.getTime()) / 86_400_000;
+
+  it('right first time climbs the boxes: 1, 3, 7, 14, then 30 days', () => {
+    let box: number | null = null;
+    const gaps: number[] = [];
+    for (let i = 0; i < 7; i++) {
+      const r = nextReview(box, 'first-try', now);
+      gaps.push(days(r.dueAt));
+      box = r.box;
+    }
+    expect(gaps).toEqual([1, 3, 7, 14, 30, 30, 30]);
+    expect(box).toBe(MAX_BOX);
+  });
+
+  it('right with help keeps the box and comes back tomorrow', () => {
+    expect(nextReview(3, 'assisted', now)).toEqual({
+      box: 3,
+      dueAt: new Date('2026-11-29T10:00:00Z'),
+    });
+    expect(nextReview(null, 'assisted', now).box).toBe(0);
+  });
+
+  it('a miss or a skip goes back to box 0, due now', () => {
+    expect(nextReview(4, 'missed', now)).toEqual({ box: 0, dueAt: now });
+    expect(nextReview(2, 'skipped', now)).toEqual({ box: 0, dueAt: now });
+  });
+
+  it('mastered means box 2 or higher', () => {
+    expect([0, 1, 2, 5].map(isMastered)).toEqual([false, false, true, true]);
   });
 });

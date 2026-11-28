@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AttemptRequest, FinishRound, SkipRequest, StartRound } from '@blurt/shared/schemas';
 import { z } from 'zod';
@@ -49,5 +49,16 @@ export class RoundsController {
     @Body({ schema: FinishRound }) body: FinishRound,
   ) {
     return this.rounds.finish(user, id, body.localDate);
+  }
+}
+
+/** GET /practice: terms due for review (DATA_AND_API.md → Student). */
+@Controller('practice')
+export class PracticeController {
+  constructor(private readonly rounds: RoundsService) {}
+
+  @Get()
+  due(@CurrentUser() user: AuthUser) {
+    return this.rounds.practice(user);
   }
 }

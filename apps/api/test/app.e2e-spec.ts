@@ -167,6 +167,9 @@ describe('API (e2e, in-memory data)', () => {
     expect(done.body).toMatchObject({ score: 200, endedBy: 'complete', streak: 1 });
     const me = await http.get('/v1/me').set(as('ana')).expect(200);
     expect(me.body).toMatchObject({ xp: 200, streak: 1, lastPlayedOn: '2026-11-22' });
+    // The skipped term is due for practice now.
+    const practice = await http.get('/v1/practice').set(as('ana')).expect(200);
+    expect(practice.body).toMatchObject({ dueCount: 1, termIds: ['bio-decomposer'] });
   });
 
   it("another student can't touch someone's round (404)", async () => {

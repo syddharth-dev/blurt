@@ -10,6 +10,7 @@ export const queryKeys = {
   me: ['me'] as const,
   subjects: ['subjects'] as const,
   classes: ['classes'] as const,
+  practice: ['practice'] as const,
 };
 
 /** The student's profile (XP, level, streak). Undefined until signed in and loaded. */
@@ -30,9 +31,16 @@ export function useClasses() {
   return useQuery({ queryKey: queryKeys.classes, queryFn: endpoints.classes, enabled: signedIn });
 }
 
+/** Terms due for review (spaced repetition). Needs a connection. */
+export function usePractice() {
+  const signedIn = useAuth((s) => s.status === 'signedIn');
+  return useQuery({ queryKey: queryKeys.practice, queryFn: endpoints.practice, enabled: signedIn });
+}
+
 /** After a round, totals and mastery changed. */
 export function refreshProgress() {
   void queryClient.invalidateQueries({ queryKey: queryKeys.me });
   void queryClient.invalidateQueries({ queryKey: queryKeys.subjects });
   void queryClient.invalidateQueries({ queryKey: queryKeys.classes });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.practice });
 }

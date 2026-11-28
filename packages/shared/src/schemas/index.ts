@@ -449,6 +449,19 @@ export const MatchTestResult = z.object({
 });
 export type MatchTestResult = z.infer<typeof MatchTestResult>;
 
+// ── /practice ────────────────────────────────────────────────────────────────
+
+/** GET /practice: terms due for review (spaced repetition), most overdue first. */
+export const PracticeResponse = z.object({
+  /** How many terms are due now */
+  dueCount: z.number().int(),
+  /** The next practice round: at most 10 term ids, most overdue first (start it with POST /rounds {termIds}) */
+  termIds: z.array(z.string()),
+  /** When the next term comes due, if nothing is due now */
+  nextDueAt: z.string().nullable(),
+});
+export type PracticeResponse = z.infer<typeof PracticeResponse>;
+
 // ── Classes ──────────────────────────────────────────────────────────────────
 
 /** 6 characters, no look-alikes (no 0/O, 1/I/L). Typed in any case. */

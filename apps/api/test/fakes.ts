@@ -3,6 +3,7 @@
  * Content is the real Grade 8 starter set from @blurt/shared.
  */
 import { GRADE8_TERMS, topicsOf, type ContentTerm } from '@blurt/shared/content';
+import { nextReview } from '@blurt/shared/progress';
 import type { PictureState, RoundTerm, TeacherPicture } from '@blurt/shared/schemas';
 import type { AuthUser } from '../src/auth/supabase-jwt.guard.js';
 import {
@@ -111,6 +112,10 @@ export class FakeRoundsRepository extends RoundsRepository {
   rounds = new Map<string, RoundRecord>();
   attempts = new Map<string, AttemptRecord & { roundId: string }>();
   finishes: { userId: string; progress: UserProgressPatch; mastery: MasteryDelta[] }[] = [];
+  /** Review boxes per "userId:termId" (spaced repetition) */
+  reviews = new Map<string, { box: number; dueAt: Date }>();
+  /** The clock finishRound uses (tests move it forward) */
+  now = () => new Date();
   constructor(private readonly users: FakeUsersRepository) {
     super();
   }
@@ -181,7 +186,23 @@ export class FakeRoundsRepository extends RoundsRepository {
     this.rounds.set(r.id, { ...r, status: 'FINISHED', summary: input.summary });
     await this.users.update(input.userId, input.progress);
     this.finishes.push({ userId: input.userId, progress: input.progress, mastery: input.mastery });
+    for (const m of input.mastery) {
+      const key = `${input.userId}:${m.termId}`;
+      this.reviews.set(key, nextReview(this.reviews.get(key)?.box ?? null, m.outcome, this.now()));
+    }
     return true;
+  }
+  async dueTerms(userId: string, now: Date, limit: number) {
+    const mine = [...this.reviews.entries()]
+      .filter(([k]) => k.startsWith(`${userId}:`))
+      .map(([k, v]) => ({ termId: k.slice(userId.length + 1), ...v }))
+      .sort((a, b) => a.dueAt.getTime() - b.dueAt.getTime());
+    const due = mine.filter((r) => r.dueAt <= now);
+    return {
+      dueCount: due.length,
+      termIds: due.slice(0, limit).map((r) => r.termId),
+      nextDueAt: due.length ? null : (mine.find((r) => r.dueAt > now)?.dueAt ?? null),
+    };
   }
 }
 

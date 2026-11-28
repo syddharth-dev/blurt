@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { MASTERED_BOX } from '@blurt/shared/progress';
 import { PrismaService } from '../common/prisma/prisma.service.js';
 import { assignedTo, visibleTopic } from '../common/visibility.js';
 
@@ -15,7 +16,7 @@ export type SubjectRow = { id: string; name: string; color: string; topics: Topi
 export abstract class ContentRepository {
   /** Published topics a student may see: the shared library and topics assigned to their classes. */
   abstract visibleSubjects(userId: string): Promise<SubjectRow[]>;
-  /** Terms mastered per topic for this user. */
+  /** Terms mastered per topic for this user (review box ≥ MASTERED_BOX: right first time on two reviews). */
   abstract masteredByTopic(userId: string): Promise<Map<string, number>>;
 }
 
@@ -56,7 +57,7 @@ export class PrismaContentRepository extends ContentRepository {
 
   async masteredByTopic(userId: string): Promise<Map<string, number>> {
     const rows = await this.db.termMastery.findMany({
-      where: { userId, correct: { gte: 1 } },
+      where: { userId, box: { gte: MASTERED_BOX } },
       select: { termId: true },
     });
     if (!rows.length) return new Map();

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { nextReview, type ReviewOutcome } from '@blurt/shared/progress';
 import type { Highlight, RoundSummaryResponse, RoundTerm } from '@blurt/shared/schemas';
 import { PrismaService } from '../common/prisma/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
@@ -53,7 +54,15 @@ export type RoundPatch = Partial<
   Pick<RoundRecord, 'lives' | 'hintsUsed' | 'skipsUsed' | 'streak' | 'bestStreak' | 'score'>
 >;
 
-export type MasteryDelta = { termId: string; correct: number; missed: number };
+/** How a term went in a round: moves its review box (spaced repetition) and its totals. */
+export type MasteryDelta = {
+  termId: string;
+  outcome: ReviewOutcome;
+  correct: number;
+  missed: number;
+};
+
+export type DueTerms = { dueCount: number; termIds: string[]; nextDueAt: Date | null };
 
 export abstract class RoundsRepository {
   /**
@@ -85,6 +94,8 @@ export abstract class RoundsRepository {
     progress: UserProgressPatch;
     mastery: MasteryDelta[];
   }): Promise<boolean>;
+  /** Terms due for review that this student can still see, most overdue first. */
+  abstract dueTerms(userId: string, now: Date, limit: number): Promise<DueTerms>;
 }
 
 const termInclude = {
@@ -268,20 +279,66 @@ export class PrismaRoundsRepository extends RoundsRepository {
       });
       if (claimed.count === 0) return false;
       await tx.user.update({ where: { id: input.userId }, data: input.progress });
+      const existing = new Map(
+        (
+          await tx.termMastery.findMany({
+            where: { userId: input.userId, termId: { in: input.mastery.map((m) => m.termId) } },
+            select: { termId: true, box: true },
+          })
+        ).map((m) => [m.termId, m.box]),
+      );
       for (const m of input.mastery) {
+        const review = nextReview(existing.get(m.termId) ?? null, m.outcome, now);
         await tx.termMastery.upsert({
           where: { userId_termId: { userId: input.userId, termId: m.termId } },
-          update: { correct: { increment: m.correct }, missed: { increment: m.missed } },
+          update: {
+            correct: { increment: m.correct },
+            missed: { increment: m.missed },
+            box: review.box,
+            dueAt: review.dueAt,
+            lastSeenAt: now,
+          },
           create: {
             userId: input.userId,
             termId: m.termId,
             correct: m.correct,
             missed: m.missed,
-            dueAt: now,
+            box: review.box,
+            dueAt: review.dueAt,
+            lastSeenAt: now,
           },
         });
       }
       return true;
     });
+  }
+
+  async dueTerms(userId: string, now: Date, limit: number): Promise<DueTerms> {
+    const rows = await this.db.termMastery.findMany({
+      where: { userId },
+      select: { termId: true, dueAt: true },
+      orderBy: { dueAt: 'asc' },
+    });
+    if (!rows.length) return { dueCount: 0, termIds: [], nextDueAt: null };
+    // Only terms still published and visible to this student (a class they left, an archived term).
+    const visible = new Set(
+      (
+        await this.db.term.findMany({
+          where: {
+            id: { in: rows.map((r) => r.termId) },
+            status: 'PUBLISHED',
+            topic: visibleTopic(userId),
+          },
+          select: { id: true },
+        })
+      ).map((t) => t.id),
+    );
+    const live = rows.filter((r) => visible.has(r.termId));
+    const due = live.filter((r) => r.dueAt <= now);
+    return {
+      dueCount: due.length,
+      termIds: due.slice(0, limit).map((r) => r.termId),
+      nextDueAt: due.length ? null : (live.find((r) => r.dueAt > now)?.dueAt ?? null),
+    };
   }
 }

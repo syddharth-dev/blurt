@@ -12,6 +12,8 @@ Background: `scene-day`, two drifting atoms, twinkling sparkles.
 5. **Your topics**: a horizontal, snap-scrolling row of topic cards (see BRAND components). The third card deliberately peeks in from the edge.
 6. **Tab bar** (white, floating): Play · Topics · League · Me. (The design canvas labels the second tab "Decks"; these docs say Topics, and the app follows the docs.)
 
+**Built (Phase 5):** under the daily challenge, a quiet **Practice · N due** card (`components/PracticeCard.tsx`) shows when terms are due for review (spaced repetition, `GET /practice`). Tapping it starts a practice round with exactly those terms (up to 10). It only shows when signed in.
+
 **Built (design pass, before Phase 3):** `apps/mobile/src/features/home/`. The daily topic rotates by local date, and "Xh left" counts down to local midnight. The "+150 XP" daily bonus (`DAILY_BONUS_XP`) is shown now and awarded by the server from Phase 3. Streak, gems and topic progress show 0 until progress is saved (Phase 3). Topics lists every topic plus a mixed round. League and Me are placeholders, and Me holds the developer links in development builds only.
 
 ## 2. Play (one screen, five states)
