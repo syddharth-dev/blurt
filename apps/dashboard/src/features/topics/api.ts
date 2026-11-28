@@ -2,6 +2,9 @@
 
 import {
   ConfusableSuggestions,
+  PICTURE_RULES,
+  PictureUploadTicket,
+  TeacherPicture,
   SubjectList,
   TeacherTerm,
   TeacherTopicDetail,
@@ -14,6 +17,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 /** Data for the topics and term editor pages (DATA_AND_API.md → Teacher). */
 export const topicKeys = {
@@ -135,4 +139,67 @@ export function useTermActions(topicId: string) {
         api(`/teacher/terms/${id}`, { method: 'DELETE', schema: z.unknown() }).then(refresh),
     }),
   };
+}
+
+// ── Pictures ─────────────────────────────────────────────────────────────────
+
+const pictureKey = (id: string) => ['teacher', 'picture', id] as const;
+
+/** A picture, polled every second while it's uploading or processing. */
+export const usePicture = (id: string | null, initial?: TeacherPicture | null) =>
+  useQuery({
+    queryKey: pictureKey(id ?? ''),
+    queryFn: () => api(`/teacher/pictures/${id}`, { schema: TeacherPicture }),
+    enabled: !!id,
+    initialData: initial && initial.id === id ? initial : undefined,
+    refetchInterval: (q) =>
+      q.state.data && (q.state.data.state === 'PROCESSING' || q.state.data.state === 'UPLOADING')
+        ? 1000
+        : false,
+  });
+
+export class UploadProblem extends Error {}
+
+/**
+ * Upload (TEACHER_DASHBOARD.md → "What happens when a teacher uploads a picture"): ask the API
+ * for a signed URL, send the file straight to Supabase Storage, then tell the API to process it.
+ */
+export function useUploadPicture() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const type = PICTURE_RULES.contentTypes.find((t) => t === file.type);
+      if (!type) throw new UploadProblem('Use a PNG, JPG, WebP or SVG picture.');
+      if (file.size > PICTURE_RULES.maxBytes) throw new UploadProblem('That file is over 5 MB.');
+      if (!supabase) throw new UploadProblem("Uploads aren't set up in this dashboard.");
+      const ticket = await api('/teacher/pictures/upload-url', {
+        method: 'POST',
+        body: { fileName: file.name.slice(0, 200), contentType: type, size: file.size },
+        schema: PictureUploadTicket,
+      });
+      const { error } = await supabase.storage
+        .from(ticket.bucket)
+        .uploadToSignedUrl(ticket.path, ticket.token, file, { contentType: type });
+      if (error) throw new UploadProblem("The upload didn't go through. Try again.");
+      const picture = await api(`/teacher/pictures/${ticket.pictureId}/complete`, {
+        method: 'POST',
+        schema: TeacherPicture,
+      });
+      qc.setQueryData(pictureKey(picture.id), picture);
+      return picture;
+    },
+  });
+}
+
+export function useUpdatePicture() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, altText }: { id: string; altText: string }) =>
+      api(`/teacher/pictures/${id}`, {
+        method: 'PATCH',
+        body: { altText },
+        schema: TeacherPicture,
+      }),
+    onSuccess: (p) => qc.setQueryData(pictureKey(p.id), p),
+  });
 }

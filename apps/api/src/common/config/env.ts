@@ -10,6 +10,9 @@ export const EnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   /** Where invited teachers land (the teacher dashboard). */
   DASHBOARD_URL: z.url().default('http://localhost:3001'),
+  /** Supabase Storage: raw uploads (private) and processed pictures (public). */
+  STORAGE_UPLOADS_BUCKET: z.string().default('uploads'),
+  STORAGE_PICTURES_BUCKET: z.string().default('pictures'),
   REDIS_URL: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   CORS_ORIGINS: z

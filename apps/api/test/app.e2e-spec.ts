@@ -7,10 +7,14 @@ import { AuthAdmin } from '../src/auth/auth-admin.js';
 import { JwtVerifier } from '../src/auth/jwt-verifier.js';
 import { ContentRepository } from '../src/content/content.repository.js';
 import { RoundsRepository } from '../src/gameplay/rounds.repository.js';
+import { PictureStorage } from '../src/media/picture-storage.js';
+import { PicturesRepository } from '../src/media/pictures.repository.js';
 import { TeacherContentRepository } from '../src/teacher/teacher-content.repository.js';
 import { UsersRepository } from '../src/users/users.repository.js';
 import {
   FakeContentRepository,
+  FakePictureStorage,
+  FakePicturesRepository,
   FakeRoundsRepository,
   FakeTeacherContentRepository,
   FakeUsersRepository,
@@ -42,6 +46,10 @@ describe('API (e2e, in-memory data)', () => {
       .useValue(new FakeContentRepository())
       .overrideProvider(TeacherContentRepository)
       .useValue(new FakeTeacherContentRepository())
+      .overrideProvider(PicturesRepository)
+      .useValue(new FakePicturesRepository())
+      .overrideProvider(PictureStorage)
+      .useValue(new FakePictureStorage())
       .overrideProvider(AuthAdmin)
       .useValue({ invite: async () => ({ id: 'invited-1' }), findIdByEmail: async () => null })
       .compile();
@@ -301,5 +309,49 @@ describe('API (e2e, in-memory data)', () => {
         .set(as('tea-a'))
         .send({ canonical: '', difficulty: 9 })
         .expect(400));
+  });
+
+  describe('picture routes (AGENTS.md rules 9 and 10)', () => {
+    const http = () => request(app.getHttpServer());
+    const body = { fileName: 'cell.png', contentType: 'image/png', size: 2048 };
+
+    beforeAll(async () => {
+      await users.create({ id: 'tea-p1', name: 'P1', email: 'p1@school.test', role: 'TEACHER' });
+      await users.create({ id: 'tea-p2', name: 'P2', email: 'p2@school.test', role: 'TEACHER' });
+    });
+
+    it('a student gets 403', () =>
+      http().post('/v1/teacher/pictures/upload-url').set(as('stu-3')).send(body).expect(403));
+
+    it('rejects files over 5 MB and types we do not accept (400)', async () => {
+      await http()
+        .post('/v1/teacher/pictures/upload-url')
+        .set(as('tea-p1'))
+        .send({ ...body, size: 6 * 1024 * 1024 })
+        .expect(400);
+      await http()
+        .post('/v1/teacher/pictures/upload-url')
+        .set(as('tea-p1'))
+        .send({ ...body, contentType: 'image/gif' })
+        .expect(400);
+    });
+
+    it("another teacher gets 403 on someone's picture", async () => {
+      const t = await http()
+        .post('/v1/teacher/pictures/upload-url')
+        .set(as('tea-p1'))
+        .send(body)
+        .expect(201);
+      const id = t.body.pictureId as string;
+      await http().get(`/v1/teacher/pictures/${id}`).set(as('tea-p2')).expect(403);
+      await http().post(`/v1/teacher/pictures/${id}/complete`).set(as('tea-p2')).expect(403);
+      await http()
+        .patch(`/v1/teacher/pictures/${id}`)
+        .set(as('tea-p2'))
+        .send({ altText: 'mine' })
+        .expect(403);
+      const own = await http().get(`/v1/teacher/pictures/${id}`).set(as('tea-p1')).expect(200);
+      expect(own.body.state).toBe('UPLOADING');
+    });
   });
 });

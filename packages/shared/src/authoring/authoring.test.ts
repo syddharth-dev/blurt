@@ -132,6 +132,12 @@ describe('termChecks', () => {
     ).toEqual(['The clue contains the answer.']);
   });
 
+  it('warns when the picture has no description for screen readers', () => {
+    expect(termChecks({ ...ok, hasAltText: false }, { requirePicture: true }).warnings).toEqual([
+      'Describe the picture for screen readers (without giving the answer).',
+    ]);
+  });
+
   it('capitalises the default display name', () => {
     expect(defaultDisplay(' kinetic energy')).toBe('Kinetic energy');
   });

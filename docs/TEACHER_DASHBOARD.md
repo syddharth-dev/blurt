@@ -38,6 +38,17 @@ Teacher accounts are created by an admin invite (or approved after sign-up), so 
 - **Library terms** (the starter set) may publish without a picture; teachers' terms need one.
 - Code: `apps/dashboard/src/features/topics/`, `apps/api/src/teacher/`.
 
+**Built (Phase 4, step 3): pictures**
+- **Upload:** in the term editor, drop or choose a PNG, JPG, WebP or SVG (max 5 MB). The dashboard gets a signed URL from the API and uploads straight to the private `uploads` bucket, then tells the API it's done. While the picture is processed, the editor shows "Getting it ready…" and checks every second.
+- **Processing** (in the API, `src/media/`): the real type is read from the file's first bytes (the name and claimed type are never trusted). The picture is rotated upright, resized to max 1600 px, saved as **WebP** with a 320 px thumbnail, and all metadata (EXIF, location) is dropped. The original upload is then deleted. Anything unreadable ends as `FAILED`, with a plain message in the editor.
+- **SVGs are sanitized and then turned into WebP.** Files with a DOCTYPE are refused; scripts, event handlers, `foreignObject` and links to anything outside the file are removed; then the SVG is rasterized. So the app and dashboard never show an SVG at all, which is safer than serving a cleaned SVG. (Decision for step 3; the original plan said "sanitized SVG".)
+- **The background job** runs inside the API for now (2 at a time); pictures left mid-processing by a restart are picked up again at startup. It moves to BullMQ with Redis in Phase 5.
+- **Highlight drawing:** drag over the picture to draw, drag the box to move it, drag the corner to resize. From the keyboard: Tab to the box, then arrow keys move it and Shift + arrow keys resize it. Choose an oval or a box, and which side the "?" badge goes on (Auto = the roomier side, the same rule as the app). Replacing the picture clears the highlight.
+- **Alt text:** "Describe the picture" is saved on the picture for screen readers. If it's empty, the checklist gives a warning (not a blocker).
+- **Phone preview:** a still Play card: the picture on lilac, the sunny glow and dashed ring around the part, the "?" badge, and Pip's bubble with the clue.
+- With a ready picture and a highlight, teachers can now publish their own terms.
+- The app shows uploaded pictures from step 5 (with classes), when students can first receive teacher topics.
+
 
 1. **Sign in** (Supabase Auth, same accounts as the app).
 2. **Overview**: my classes, recent activity, terms students miss most this week.

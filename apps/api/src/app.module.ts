@@ -9,13 +9,14 @@ import { PrismaModule } from './common/prisma/prisma.module.js';
 import { ContentModule } from './content/content.module.js';
 import { GameplayModule } from './gameplay/gameplay.module.js';
 import { HealthModule } from './health/health.module.js';
+import { MediaModule } from './media/media.module.js';
 import { ProgressModule } from './progress/progress.module.js';
 import { TeacherModule } from './teacher/teacher.module.js';
 import { UsersModule } from './users/users.module.js';
 
 /**
  * Root module of the modular monolith (docs/ARCHITECTURE.md → "API folder structure").
- * Still to come: leaderboard (Phase 5); media, classes (Phase 4).
+ * Still to come: leaderboard (Phase 5); classes (Phase 4).
  */
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { UsersModule } from './users/users.module.js';
     GameplayModule,
     AdminModule,
     TeacherModule,
+    MediaModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -145,6 +145,8 @@ function toTerm(t: TermRow): TermRecord {
           diagram: t.picture.diagram,
           url: t.picture.url,
           thumbUrl: t.picture.thumbUrl,
+          width: t.picture.width,
+          height: t.picture.height,
           state: t.picture.state,
           altText: t.picture.altText,
         }

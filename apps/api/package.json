@@ -23,7 +23,8 @@
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate",
     "db:seed": "prisma db seed",
-    "make-admin": "tsx scripts/make-admin.ts"
+    "make-admin": "tsx scripts/make-admin.ts",
+    "storage:setup": "tsx scripts/setup-storage.ts"
   },
   "dependencies": {
     "@blurt/shared": "workspace:*",
@@ -38,6 +39,7 @@
     "jose": "^6.2.18",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sharp": "^0.35.5",
     "zod": "^4.6.7"
   },
   "devDependencies": {

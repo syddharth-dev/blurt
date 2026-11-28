@@ -3,7 +3,7 @@
  * Content is the real Grade 8 starter set from @blurt/shared.
  */
 import { GRADE8_TERMS, topicsOf, type ContentTerm } from '@blurt/shared/content';
-import type { RoundTerm, TeacherPicture } from '@blurt/shared/schemas';
+import type { PictureState, RoundTerm, TeacherPicture } from '@blurt/shared/schemas';
 import type { AuthUser } from '../src/auth/supabase-jwt.guard.js';
 import { ContentRepository, type SubjectRow } from '../src/content/content.repository.js';
 import {
@@ -14,6 +14,8 @@ import {
   type RoundRecord,
   type TopicTerms,
 } from '../src/gameplay/rounds.repository.js';
+import { PictureStorage } from '../src/media/picture-storage.js';
+import { PicturesRepository, type PictureRecord } from '../src/media/pictures.repository.js';
 import type { UserProgressPatch } from '../src/progress/progress.service.js';
 import {
   TeacherContentRepository,
@@ -221,7 +223,16 @@ export class FakeTeacherContentRepository extends TeacherContentRepository {
   private picture(id: string | null): TeacherPicture | null {
     const p = id ? this.pictures.get(id) : undefined;
     return p && id
-      ? { id, diagram: p.diagram, url: null, thumbUrl: null, state: p.state, altText: null }
+      ? {
+          id,
+          diagram: p.diagram,
+          url: null,
+          thumbUrl: null,
+          width: 200,
+          height: 200,
+          state: p.state,
+          altText: null,
+        }
       : null;
   }
   private withTerms(t: FakeTopic): TopicWithTerms {
@@ -386,5 +397,73 @@ export class FakeTeacherContentRepository extends TeacherContentRepository {
         display: t.display,
         confusables: t.confusables,
       }));
+  }
+}
+
+// ── Pictures ────────────────────────────────────────────────────────────────
+
+export class FakePicturesRepository extends PicturesRepository {
+  rows = new Map<string, PictureRecord>();
+  async create(data: { id: string; ownerId: string; storageKey: string }) {
+    const p: PictureRecord = {
+      ...data,
+      diagram: null,
+      url: null,
+      thumbUrl: null,
+      width: null,
+      height: null,
+      state: 'UPLOADING',
+      altText: null,
+    };
+    this.rows.set(p.id, p);
+    return { ...p };
+  }
+  async find(id: string) {
+    const p = this.rows.get(id);
+    return p ? { ...p } : null;
+  }
+  async transition(id: string, from: PictureState, to: PictureState) {
+    const p = this.rows.get(id);
+    if (!p || p.state !== from) return false;
+    p.state = to;
+    return true;
+  }
+  async markReady(
+    id: string,
+    data: { url: string; thumbUrl: string; width: number; height: number },
+  ) {
+    Object.assign(this.rows.get(id)!, data, { state: 'READY' });
+  }
+  async markFailed(id: string) {
+    this.rows.get(id)!.state = 'FAILED';
+  }
+  async update(id: string, data: { altText: string | null }) {
+    Object.assign(this.rows.get(id)!, data);
+    return { ...this.rows.get(id)! };
+  }
+  async processingIds() {
+    return [...this.rows.values()].filter((p) => p.state === 'PROCESSING').map((p) => p.id);
+  }
+}
+
+export class FakePictureStorage extends PictureStorage {
+  configured = true;
+  uploadsBucket = 'uploads';
+  uploads = new Map<string, Buffer>();
+  public = new Map<string, Buffer>();
+  async createSignedUpload(path: string) {
+    return { token: `token-for-${path}` };
+  }
+  async downloadUpload(path: string) {
+    const b = this.uploads.get(path);
+    if (!b) throw new Error('not found');
+    return b;
+  }
+  async removeUpload(path: string) {
+    this.uploads.delete(path);
+  }
+  async putPublic(path: string, data: Buffer) {
+    this.public.set(path, data);
+    return `https://cdn.test/${path}`;
   }
 }

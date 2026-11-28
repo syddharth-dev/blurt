@@ -291,15 +291,51 @@ export type UpdateTerm = z.input<typeof UpdateTerm>;
 export const ReorderTerms = z.object({ termIds: z.array(z.string().min(1)).max(200) }).strict();
 export type ReorderTerms = z.infer<typeof ReorderTerms>;
 
+export const PictureState = z.enum(['UPLOADING', 'PROCESSING', 'READY', 'FAILED']);
+export type PictureState = z.infer<typeof PictureState>;
+
 export const TeacherPicture = z.object({
   id: z.string(),
   diagram: z.string().nullable(),
   url: z.string().nullable(),
   thumbUrl: z.string().nullable(),
-  state: z.enum(['UPLOADING', 'PROCESSING', 'READY', 'FAILED']),
+  /** Pixel size once processed (bundled diagrams are 200 × 200) */
+  width: z.number().int().nullable(),
+  height: z.number().int().nullable(),
+  state: PictureState,
   altText: z.string().nullable(),
 });
 export type TeacherPicture = z.infer<typeof TeacherPicture>;
+
+/** Picture rules shared by the dashboard (early feedback) and the API (TEACHER_DASHBOARD.md). */
+export const PICTURE_RULES = {
+  maxBytes: 5 * 1024 * 1024,
+  /** What the browser may claim. The API checks the real type from the file's bytes. */
+  contentTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+} as const;
+
+/** POST /teacher/pictures/upload-url. The name and type are hints only, never trusted. */
+export const PictureUploadRequest = z
+  .object({
+    fileName: z.string().max(200),
+    contentType: z.enum(PICTURE_RULES.contentTypes),
+    size: z.number().int().min(1).max(PICTURE_RULES.maxBytes),
+  })
+  .strict();
+export type PictureUploadRequest = z.infer<typeof PictureUploadRequest>;
+
+/** Upload straight to Supabase Storage with uploadToSignedUrl(path, token, file). */
+export const PictureUploadTicket = z.object({
+  pictureId: z.string(),
+  bucket: z.string(),
+  path: z.string(),
+  token: z.string(),
+});
+export type PictureUploadTicket = z.infer<typeof PictureUploadTicket>;
+
+/** PATCH /teacher/pictures/:id */
+export const UpdatePicture = z.object({ altText: z.string().trim().max(200) }).strict();
+export type UpdatePicture = z.infer<typeof UpdatePicture>;
 
 export const TeacherTerm = z.object({
   id: z.string(),
@@ -394,6 +430,7 @@ export const ERROR_CODES = {
   topicLocked: 'TOPIC_LOCKED',
   /** Publishing (or saving a published term) failed the publish checks */
   notReady: 'NOT_READY',
+  storageNotConfigured: 'STORAGE_NOT_CONFIGURED',
 } as const;
 
 export const HealthResponse = z.object({ ok: z.literal(true) });

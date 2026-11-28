@@ -265,7 +265,9 @@ All routes are under `/v1` and need `Authorization: Bearer <supabase-jwt>`. A `R
 | GET/PATCH/DELETE | `/teacher/topics/:id` | Edit, archive |
 | POST | `/teacher/topics/:id/publish` | Publish (validates every term) |
 | POST | `/teacher/pictures/upload-url` | `{fileName, contentType, size}` → signed upload URL + `pictureId` |
+| POST | `/teacher/pictures/:id/complete` | The browser finished uploading → processing starts (safe to repeat) |
 | GET | `/teacher/pictures/:id` | Processing state and URLs |
+| PATCH | `/teacher/pictures/:id` | `{altText}` |
 | POST | `/teacher/topics/:id/terms` | Create a term |
 | PATCH/DELETE | `/teacher/terms/:id` | Edit (published terms get a new version) |
 | POST | `/teacher/terms/:id/audio` | Regenerate the pronunciation clip |
@@ -319,3 +321,9 @@ Errors use one shape: `{ "error": { "code": "ROUND_FINISHED", "message": "…" }
 - **Deleting:** `DELETE /teacher/terms/:id` deletes a draft and archives a published term. `DELETE /teacher/topics/:id` archives; archived topics refuse edits (409 `TOPIC_ARCHIVED`).
 - **Pictures on terms:** a term may point at the teacher's own picture or a bundled diagram, never another teacher's (403).
 - `Term.highlight` is nullable (null until the part to name is marked).
+
+### Built in Phase 4 step 3 (decisions)
+- **Upload flow:** `POST /teacher/pictures/upload-url` checks the claimed type and size (max 5 MB, `PICTURE_RULES`), creates the `Picture` row (`UPLOADING`), and returns `{pictureId, bucket, path, token}`. The path is always `<teacherId>/<pictureId>`, never the file name. The browser uploads with `uploadToSignedUrl`, then calls `/complete`, which moves the row to `PROCESSING` exactly once and queues the job.
+- **The job** (`PictureJobs`): download → `processPicture` (real type from the bytes, sanitize and rasterize SVG, rotate, max 1600 px WebP + 320 px thumbnail, no metadata) → public `pictures` bucket → `READY` with `url`, `thumbUrl`, `width`, `height`. Failures end `FAILED`. The original upload is always deleted.
+- **Access:** a teacher sees and changes only their own pictures (403 otherwise, tested); admins see all; bundled diagrams can be viewed by any teacher but not changed. A term may use only a `READY` picture to publish.
+- **Rate limit:** 30 upload URLs a minute per client. Without the secret key, upload-url answers 503 `STORAGE_NOT_CONFIGURED`.

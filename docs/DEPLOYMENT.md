@@ -53,7 +53,10 @@ Every push to `main` then deploys automatically. Use a `staging` branch for the 
 1. On Vercel, import the repo and set the project root to `apps/dashboard`.
 2. Environment variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the anon key is safe for browsers; the service-role key never is).
 3. Custom domain, e.g. `teach.blurt.app`, and add it to the API's `CORS_ORIGINS`.
-4. In Supabase Storage, create a `pictures` bucket: uploads only through signed URLs from the API, public read for processed images only.
+4. Create the Storage buckets with `pnpm --filter api storage:setup` (needs the secret key in `apps/api/.env`; safe to run again):
+   - `uploads` (**private**): teachers' raw files arrive here through signed upload URLs from the API. The bucket itself refuses files over 5 MB and anything but PNG, JPG, WebP or SVG. The API deletes each file once it's processed, since originals can carry location data.
+   - `pictures` (**public**, WebP only): the processed pictures and thumbnails the app and dashboard show, at `<teacherId>/<pictureId>.webp`.
+   Names are set by `STORAGE_UPLOADS_BUCKET` and `STORAGE_PICTURES_BUCKET` (defaults `uploads`, `pictures`). On Railway, the API needs `SUPABASE_SERVICE_ROLE_KEY` (the secret key) for uploads to work; without it, the upload route answers 503.
 5. The API also runs the **worker** for picture processing and pronunciation audio. On Railway, add it as a second service from the same code with start command `node dist/worker.js`, sharing the same environment variables.
 
 ## Sign-in email (Supabase Auth)

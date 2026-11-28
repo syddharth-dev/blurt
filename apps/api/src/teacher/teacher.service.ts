@@ -311,7 +311,12 @@ export class TeacherService {
 
   private checks(topic: TopicRecord, t: TermRecord) {
     return termChecks(
-      { ...t, hasPicture: t.picture?.state === 'READY', hasHighlight: !!t.highlight },
+      {
+        ...t,
+        hasPicture: t.picture?.state === 'READY',
+        hasHighlight: !!t.highlight,
+        hasAltText: !!t.picture?.altText,
+      },
       { requirePicture: topic.visibility !== 'LIBRARY' },
     );
   }

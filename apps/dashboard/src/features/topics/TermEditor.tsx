@@ -1,7 +1,12 @@
 'use client';
 
 import { defaultDisplay, suggestSyllables, termChecks } from '@blurt/shared/authoring';
-import type { CreateTerm, TeacherTerm, TeacherTopicDetail } from '@blurt/shared/schemas';
+import {
+  Highlight,
+  type CreateTerm,
+  type TeacherTerm,
+  type TeacherTopicDetail,
+} from '@blurt/shared/schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -15,8 +20,10 @@ import {
 } from 'react-hook-form';
 import { z } from 'zod';
 import { Button, Card, Chip, Field, Input, Notice, StatusChip, Textarea } from '@/components/ui';
-import { useConfusableSuggestions, useTerm, useTermActions, useTopic } from './api';
-import { PicturePanel } from './PicturePanel';
+import { useConfusableSuggestions, usePicture, useTerm, useTermActions, useTopic } from './api';
+import { PhonePreview } from './PhonePreview';
+import { aspectOf, pictureSrc } from './picture';
+import { PictureField } from './PictureField';
 
 /** Rows with text need their reason or feedback; blank rows are dropped on save. */
 function needsSecond(second: 'reason' | 'feedback', message: string) {
@@ -46,6 +53,8 @@ const FormValues = z.object({
       ),
     ),
   difficulty: z.number().int().min(1).max(3),
+  pictureId: z.string().nullable(),
+  highlight: Highlight.nullable(),
 });
 type FormValues = z.infer<typeof FormValues>;
 
@@ -59,6 +68,8 @@ const toForm = (t?: TeacherTerm): FormValues => ({
   close: t?.close ?? [],
   confusables: t?.confusables ?? [],
   difficulty: t?.difficulty ?? 1,
+  pictureId: t?.picture?.id ?? null,
+  highlight: t?.highlight ?? null,
 });
 
 const toBody = (v: FormValues) => ({
@@ -75,6 +86,8 @@ const toBody = (v: FormValues) => ({
     .filter((c) => c.text.trim())
     .map((c) => ({ text: c.text.trim(), feedback: c.feedback.trim() })),
   difficulty: v.difficulty,
+  pictureId: v.pictureId,
+  highlight: v.highlight,
 });
 
 function useDebounced<T>(value: T, ms: number): T {
@@ -119,11 +132,20 @@ function Editor({ topic, term }: { topic: TeacherTopicDetail; term?: TeacherTerm
   const values = useWatch({ control }) as FormValues;
   const published = term?.status === 'PUBLISHED';
 
+  const picture = usePicture(values.pictureId, term?.picture).data;
   const body = toBody({ ...toForm(), ...values });
   const checks = termChecks(
-    { ...body, hasPicture: term?.picture?.state === 'READY', hasHighlight: !!term?.highlight },
+    {
+      ...body,
+      hasPicture: picture?.state === 'READY',
+      hasHighlight: !!values.highlight,
+      hasAltText: !!picture?.altText,
+    },
     { requirePicture: !topic.library },
   );
+  const setPicture = (id: string | null) => form.setValue('pictureId', id, { shouldDirty: true });
+  const setHighlight = (h: Highlight | null) =>
+    form.setValue('highlight', h, { shouldDirty: true });
 
   const save = (publish: boolean) =>
     form.handleSubmit((v) => {
@@ -156,8 +178,19 @@ function Editor({ topic, term }: { topic: TeacherTopicDetail; term?: TeacherTerm
       <div className="grid gap-s20 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
         <div className="flex flex-col gap-s20">
           <Card>
-            <PicturePanel picture={term?.picture ?? null} highlight={term?.highlight ?? null} />
+            <PictureField
+              picture={values.pictureId ? picture : null}
+              highlight={values.highlight}
+              onPicture={setPicture}
+              onHighlight={setHighlight}
+            />
           </Card>
+          <PhonePreview
+            src={values.pictureId ? pictureSrc(picture) : null}
+            aspect={aspectOf(picture)}
+            highlight={values.highlight}
+            clue={values.clue}
+          />
           <Checklist
             problems={checks.problems}
             warnings={checks.warnings}

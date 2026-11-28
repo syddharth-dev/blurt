@@ -13,6 +13,8 @@ export type CheckableTerm = {
   /** Whether a picture is attached and processed. */
   hasPicture: boolean;
   hasHighlight: boolean;
+  /** Whether the picture is described for screen readers (left out: not checked). */
+  hasAltText?: boolean;
 };
 
 export type CheckOptions = {
@@ -49,6 +51,9 @@ export function termChecks(term: CheckableTerm, { requirePicture }: CheckOptions
 
   if (answer && term.clue && matchKey(term.clue).includes(answer)) {
     warnings.push('The clue contains the answer.');
+  }
+  if (term.hasPicture && term.hasAltText === false) {
+    warnings.push('Describe the picture for screen readers (without giving the answer).');
   }
   return { problems, warnings };
 }
