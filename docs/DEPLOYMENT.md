@@ -27,20 +27,20 @@ Never point a development build at the production database.
 
 **Ready to go:** `railway.json` at the repo root sets the build (`pnpm turbo run build --filter=api`, which also builds `packages/shared` and generates the Prisma client), the start command (`node apps/api/dist/main.js`), migrations before each deploy (`prisma migrate deploy`) and the `/health` check. In Railway, keep the service's root directory at the **repo root**: the API needs `packages/shared` to build. The steps below explain each part; with `railway.json` you mostly just add the environment variables (step 5).
 
-1. **Add a health check** to the API: `GET /health` returns `{ "ok": true }`.
-2. **Add a `Dockerfile`** in `apps/api` (or let Railway's builder detect Node). It should build `packages/shared` and then the API (`pnpm turbo run build --filter api`, which also runs `prisma generate`), and start with `node dist/main.js`. The server must listen on `process.env.PORT`.
-3. **Create a Railway project** → "Deploy from GitHub repo" → select the repo. Set the service's root directory to `apps/api` (or the build settings for your monorepo).
-4. **Add Redis** from Railway's template, or use Upstash.
+1. **Health check:** built. `GET /health` returns `{ "ok": true }`.
+2. **Build:** no Dockerfile needed. Railway's builder (Railpack) reads `railway.json`, uses Node 22 (`.nvmrc`) and pnpm from `packageManager`, and runs `pnpm turbo run build --filter=api`. The server listens on Railway's `PORT`.
+3. **Create a Railway project** → "Deploy from GitHub repo" → select the repo. Leave the service's root directory empty (the **repo root**), so `packages/shared` is included.
+4. **Redis:** not needed yet (it arrives with leagues in Phase 5). Then add it from Railway's template, or use Upstash.
 5. **Set environment variables** in Railway (never commit these):
    ```
-   DATABASE_URL=            # Supabase pooled connection string
-   DIRECT_URL=              # Supabase direct connection (for migrations)
+   DATABASE_URL=            # Supabase transaction pooler (port 6543)
+   DIRECT_URL=              # Supabase session pooler (port 5432), for migrations. Not the "direct" db.<ref>.supabase.co host: that one is IPv6-only and Railway can't reach it
    SUPABASE_URL=            # the API verifies user tokens against <SUPABASE_URL>/auth/v1/.well-known/jwks.json
    SUPABASE_SERVICE_ROLE_KEY=   # server only, never in the app
-   REDIS_URL=
-   SENTRY_DSN=
+   DASHBOARD_URL=           # where invited teachers land (the dashboard's URL)
    NODE_ENV=production
-   CORS_ORIGINS=            # the admin site's URL
+   CORS_ORIGINS=            # the dashboard's URL(s), comma-separated
+   # Optional: SENTRY_DSN, STORAGE_UPLOADS_BUCKET, STORAGE_PICTURES_BUCKET, REDIS_URL (Phase 5). Don't set PORT: Railway does.
    ```
 6. **Run migrations on deploy** with `npx prisma migrate deploy` as a pre-deploy or release command, never `migrate dev` in production.
 7. **Set the health check path** to `/health` so Railway only switches traffic when the new version is up.
@@ -50,9 +50,9 @@ Never point a development build at the production database.
 Every push to `main` then deploys automatically. Use a `staging` branch for the staging service.
 
 ## Deploying the teacher dashboard
-1. On Vercel, import the repo and set the project root to `apps/dashboard`.
-2. Environment variables: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the anon key is safe for browsers; the service-role key never is).
-3. Custom domain, e.g. `teach.blurt.app`, and add it to the API's `CORS_ORIGINS`.
+1. On Vercel, import the repo and set the project's **Root Directory** to `apps/dashboard`. `apps/dashboard/vercel.json` sets the build: `pnpm turbo run build --filter=dashboard` from the repo root, which builds `packages/shared` first (its `dist/` isn't in git). Leave the build and install commands as they come.
+2. Environment variables: `NEXT_PUBLIC_API_URL` (the Railway API's URL), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the anon or publishable key is safe for browsers; the secret key never is), and `ENABLE_EXPERIMENTAL_COREPACK=1` so Vercel uses the pnpm version in `package.json` (`packageManager`). `NEXT_PUBLIC_*` values are built into the page, so redeploy after changing them.
+3. Put the dashboard's URL (the `*.vercel.app` one, or a custom domain such as `teach.blurt.app`) in the API's `CORS_ORIGINS` and `DASHBOARD_URL` on Railway, and in **Supabase → Authentication → URL Configuration** (Site URL and Redirect URLs).
 4. Create the Storage buckets with `pnpm --filter api storage:setup` (needs the secret key in `apps/api/.env`; safe to run again):
    - `uploads` (**private**): teachers' raw files arrive here through signed upload URLs from the API. The bucket itself refuses files over 5 MB and anything but PNG, JPG, WebP or SVG. The API deletes each file once it's processed, since originals can carry location data.
    - `pictures` (**public**, WebP only): the processed pictures and thumbnails the app and dashboard show, at `<teacherId>/<pictureId>.webp`.
